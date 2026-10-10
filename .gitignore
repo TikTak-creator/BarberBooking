@@ -1,0 +1,10 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.log
+publish/
+capture_screenshots.ps1
+test_app.ps1

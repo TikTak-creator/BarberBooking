@@ -1,0 +1,251 @@
+:root {
+    --bs-font-sans-serif: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --brand-primary: #2563EB;
+    --brand-dark: #0F172A;
+    --brand-card-bg: #FFFFFF;
+    --brand-border: #E2E8F0;
+    --brand-bg: #F8FAFC;
+}
+
+body {
+    font-family: var(--bs-font-sans-serif);
+    background-color: var(--brand-bg);
+    color: #1E293B;
+    -webkit-font-smoothing: antialiased;
+}
+
+.shadow-xs {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.shadow-sm {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.rounded-4 {
+    border-radius: 1rem !important;
+}
+
+.rounded-3 {
+    border-radius: 0.75rem !important;
+}
+
+/* ==========================================================
+   TIMELINE SCHEDULE (Референс со скриншота)
+   ========================================================== */
+.timeline-wrapper {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    overflow-x: auto;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+}
+
+.timeline-header {
+    display: grid;
+    grid-template-columns: 80px repeat(var(--master-count, 4), minmax(220px, 1fr));
+    border-bottom: 2px solid #F1F5F9;
+    background: #FAFAFA;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.timeline-time-col-header {
+    padding: 16px 12px;
+    font-weight: 700;
+    color: #64748B;
+    font-size: 0.85rem;
+    text-align: center;
+    border-right: 1px solid #F1F5F9;
+}
+
+.timeline-barber-col-header {
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-right: 1px solid #F1F5F9;
+}
+
+.timeline-barber-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.timeline-body {
+    display: grid;
+    grid-template-columns: 80px repeat(var(--master-count, 4), minmax(220px, 1fr));
+    position: relative;
+    background: #FFFFFF;
+}
+
+.timeline-time-col {
+    border-right: 1px solid #F1F5F9;
+    background: #FAFAFA;
+}
+
+.timeline-time-slot {
+    height: 80px;
+    padding: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748B;
+    text-align: center;
+    border-bottom: 1px dashed #E2E8F0;
+}
+
+.timeline-barber-col {
+    position: relative;
+    border-right: 1px solid #F1F5F9;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 79px,
+        #F8FAFC 79px,
+        #F8FAFC 80px
+    );
+}
+
+/* Карточки записей в таймлайне */
+.timeline-card {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    overflow: hidden;
+    z-index: 5;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+.timeline-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 8;
+}
+
+/* Цветовые стили карточек как на референсе */
+.timeline-card-yellow {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    border-left: 5px solid #F59E0B;
+    color: #92400E;
+}
+
+.timeline-card-cyan {
+    background: linear-gradient(135deg, #CFFAFE 0%, #A5F3FC 100%);
+    border-left: 5px solid #06B6D4;
+    color: #155E75;
+}
+
+.timeline-card-purple {
+    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+    border-left: 5px solid #8B5CF6;
+    color: #5B21B6;
+}
+
+.timeline-card-emerald {
+    background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+    border-left: 5px solid #10B981;
+    color: #065F46;
+}
+
+.timeline-card-orange {
+    background: linear-gradient(135deg, #FFEDD5 0%, #FED7AA 100%);
+    border-left: 5px solid #F97316;
+    color: #9A3412;
+}
+
+/* ==========================================================
+   BOOKING WIZARD (Интерактивный виджет для клиентов)
+   ========================================================== */
+.service-card-radio, .barber-card-radio {
+    border: 2px solid #E2E8F0;
+    border-radius: 14px;
+    background: #FFFFFF;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    height: 100%;
+}
+
+.service-card-radio:hover, .barber-card-radio:hover {
+    border-color: #93C5FD;
+    box-shadow: 0 6px 16px -2px rgba(37, 99, 235, 0.08);
+}
+
+.service-card-radio.selected, .barber-card-radio.selected {
+    border-color: #2563EB;
+    background: #EFF6FF;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Временные слоты (chips) */
+.time-slot-btn {
+    border: 1.5px solid #E2E8F0;
+    background: #FFFFFF;
+    color: #1E293B;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.time-slot-btn:hover:not(.disabled) {
+    border-color: #2563EB;
+    color: #2563EB;
+    background: #F8FAFC;
+}
+
+.time-slot-btn.selected {
+    border-color: #2563EB;
+    background: #2563EB;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.time-slot-btn.disabled {
+    background: #F1F5F9;
+    color: #94A3B8;
+    border-color: #E2E8F0;
+    cursor: not-allowed;
+    opacity: 0.7;
+    position: relative;
+}
+
+.time-slot-btn.disabled::after {
+    content: "занято";
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: #EF4444;
+}
+
+/* Карточки со статистикой на Dashboard */
+.stat-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}

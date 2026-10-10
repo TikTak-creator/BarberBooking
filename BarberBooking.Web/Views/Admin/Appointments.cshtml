@@ -1,0 +1,179 @@
+@model List<BarberBooking.Web.Models.CalendarAppointmentDto>
+@using BarberBooking.Web.Models
+@{
+    ViewData["Title"] = "Все записи - Список";
+    var barbers = ViewBag.Barbers as List<Barber> ?? new List<Barber>();
+    var fromDate = ViewBag.FromDate as string;
+    var toDate = ViewBag.ToDate as string;
+    var selectedBarberId = ViewBag.SelectedBarberId as int?;
+    var selectedStatus = ViewBag.SelectedStatus as AppointmentStatus?;
+    var search = ViewBag.Search as string;
+}
+
+<div class="container-fluid px-lg-4 py-3">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h2 fw-extrabold text-dark mb-1">Журнал всех записей</h1>
+            <p class="text-secondary mb-0">Поиск, фильтрация по мастерам, датам и статусам бронирования</p>
+        </div>
+        <div class="btn-group p-1 bg-white border rounded-pill shadow-xs" role="group">
+            <a asp-action="Timeline" class="btn btn-sm btn-light rounded-pill px-3 fw-semibold text-secondary">
+                <i class="bi bi-kanban me-1"></i> Таймлайн
+            </a>
+            <a asp-action="Appointments" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold active">
+                <i class="bi bi-table me-1"></i> Таблица
+            </a>
+            <a asp-action="Dashboard" class="btn btn-sm btn-light rounded-pill px-3 fw-semibold text-secondary">
+                <i class="bi bi-graph-up me-1"></i> Аналитика
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card border-0 bg-white rounded-4 shadow-sm p-4 mb-4">
+        <form method="get" asp-action="Appointments" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Поиск (клиент, телефон, код)</label>
+                <input type="text" name="search" value="@search" class="form-control rounded-3" placeholder="Адилет или 555 или BRB-" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted">Барбер</label>
+                <select name="barberId" class="form-select rounded-3">
+                    <option value="">Все мастера</option>
+                    @foreach (var b in barbers)
+                    {
+                        <option value="@b.Id" selected="@(selectedBarberId == b.Id)">@b.FullName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted">Статус</label>
+                <select name="status" class="form-select rounded-3">
+                    <option value="">Все статусы</option>
+                    <option value="0" selected="@(selectedStatus == AppointmentStatus.Pending)">Ожидает</option>
+                    <option value="1" selected="@(selectedStatus == AppointmentStatus.Confirmed)">Подтверждена</option>
+                    <option value="2" selected="@(selectedStatus == AppointmentStatus.Completed)">Выполнена</option>
+                    <option value="3" selected="@(selectedStatus == AppointmentStatus.Cancelled)">Отменена</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted">Дата с</label>
+                <input type="date" name="fromDate" value="@fromDate" class="form-control rounded-3" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted">Дата по</label>
+                <input type="date" name="toDate" value="@toDate" class="form-control rounded-3" />
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold">
+                    <i class="bi bi-funnel"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card border-0 bg-white rounded-4 shadow-sm overflow-hidden">
+        <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="fw-bold mb-0">Записи (@Model.Count)</h5>
+            <div class="text-muted small">
+                Сумма по записям: <strong class="text-dark">@Model.Where(m => m.Status != AppointmentStatus.Cancelled).Sum(m => m.Price).ToString("N0") сом</strong>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small">
+                    <tr>
+                        <th class="ps-4">Код</th>
+                        <th>Дата и время</th>
+                        <th>Клиент</th>
+                        <th>Мастер</th>
+                        <th>Услуга</th>
+                        <th>Сумма</th>
+                        <th>Статус</th>
+                        <th class="text-end pe-4">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var a in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="badge bg-light text-dark border fw-bold">@a.BookingCode</span>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">@a.Date.ToString("dd.MM.yyyy")</div>
+                                    <div class="small text-muted">@a.TimeRange</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">@a.ClientName</div>
+                                    <a href="tel:@a.ClientPhone" class="small text-muted text-decoration-none">@a.ClientPhone</a>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="@a.BarberAvatar" alt="@a.BarberName" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;" />
+                                        <span class="fw-semibold">@a.BarberName</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@a.ServiceName</div>
+                                    <div class="small text-muted">@a.DurationMinutes мин</div>
+                                </td>
+                                <td class="fw-extrabold text-dark">@a.Price.ToString("N0") сом</td>
+                                <td>
+                                    <span class="badge @a.StatusBadgeClass rounded-pill px-2 py-1">@a.StatusName</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light rounded-circle shadow-none" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                                            <li>
+                                                <form method="post" asp-action="UpdateStatus">
+                                                    <input type="hidden" name="id" value="@a.Id" />
+                                                    <input type="hidden" name="status" value="@AppointmentStatus.Confirmed" />
+                                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                                    <button type="submit" class="dropdown-item small text-primary"><i class="bi bi-check me-2"></i>Подтвердить</button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form method="post" asp-action="UpdateStatus">
+                                                    <input type="hidden" name="id" value="@a.Id" />
+                                                    <input type="hidden" name="status" value="@AppointmentStatus.Completed" />
+                                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                                    <button type="submit" class="dropdown-item small text-success"><i class="bi bi-check-all me-2"></i>Выполнена</button>
+                                                </form>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <form method="post" asp-action="UpdateStatus" onsubmit="return confirm('Отменить запись?');">
+                                                    <input type="hidden" name="id" value="@a.Id" />
+                                                    <input type="hidden" name="status" value="@AppointmentStatus.Cancelled" />
+                                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                                    <button type="submit" class="dropdown-item small text-danger"><i class="bi bi-x-circle me-2"></i>Отменить</button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-search fs-3 d-block mb-2"></i>
+                                Записей по заданным фильтрам не найдено
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

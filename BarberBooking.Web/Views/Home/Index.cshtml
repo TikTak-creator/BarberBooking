@@ -1,0 +1,161 @@
+@using BarberBooking.Web.Models
+@{
+    ViewData["Title"] = "Премиальный барбершоп в Бишкеке";
+    var barbers = ViewBag.Barbers as List<Barber> ?? new List<Barber>();
+    var services = ViewBag.Services as List<ServiceItem> ?? new List<ServiceItem>();
+}
+
+<!-- Hero Section -->
+<section class="py-5 py-md-6 bg-white border-bottom position-relative overflow-hidden">
+    <div class="container-fluid px-lg-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 bg-light rounded-pill border mb-3">
+                    <span class="badge bg-warning text-dark rounded-pill"><i class="bi bi-star-fill"></i> 4.9</span>
+                    <span class="small fw-semibold text-secondary">Лучший барбершоп Бишкека 2026</span>
+                </div>
+                <h1 class="display-4 fw-extrabold text-dark tracking-tight mb-3">
+                    Идеальный стиль.<br />
+                    <span class="text-primary">Твой правильный образ.</span>
+                </h1>
+                <p class="lead text-secondary mb-4">
+                    Премиальные мужские стрижки, уход за бородой и бритье опасной бритвой от топовых барберов. 
+                    Удобная онлайн-запись без звонков и очередей — выберите мастера и время в пару кликов.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a asp-controller="Booking" asp-action="Index" class="btn btn-primary btn-lg px-4 py-3 fw-bold rounded-pill shadow-sm d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar2-check-fill fs-5"></i>
+                        <span>Записаться онлайн</span>
+                    </a>
+                    <a asp-controller="Admin" asp-action="Timeline" class="btn btn-outline-dark btn-lg px-4 py-3 fw-bold rounded-pill d-flex align-items-center gap-2">
+                        <i class="bi bi-kanban fs-5"></i>
+                        <span>Панель записей (Appointments)</span>
+                    </a>
+                </div>
+                <div class="d-flex gap-4 mt-5 pt-3 border-top text-muted small">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check text-success fs-5"></i>
+                        <span>Без двойных броней</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-cup-hot text-danger fs-5"></i>
+                        <span>Кофе и напитки</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-geo-alt text-primary fs-5"></i>
+                        <span>Центр Бишкека</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="position-relative">
+                    <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=900&q=80" 
+                         alt="Barbershop Atmosphere" 
+                         class="img-fluid rounded-4 shadow-lg w-100 object-fit-cover" 
+                         style="max-height: 480px;" />
+                    
+                    <div class="position-absolute bottom-0 start-0 m-4 p-3 bg-white bg-opacity-95 backdrop-blur rounded-3 shadow-md border d-flex align-items-center gap-3">
+                        <div class="bg-success text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-clock-history fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">Быстрая запись 24/7</div>
+                            <div class="small text-muted">Свободные слоты обновляются онлайн</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Section -->
+<section class="py-5" id="services">
+    <div class="container-fluid px-lg-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4 gap-3">
+            <div>
+                <span class="text-primary fw-bold text-uppercase small tracking-wide">Прайс-лист</span>
+                <h2 class="display-6 fw-bold text-dark mb-0">Услуги и стоимость</h2>
+            </div>
+            <a asp-controller="Booking" asp-action="Index" class="btn btn-outline-primary fw-semibold rounded-pill px-4">
+                Записаться на любую услугу <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var s in services)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 bg-white rounded-4 shadow-xs hover-shadow transition p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="bg-light text-primary rounded-3 p-3">
+                                <i class="bi @s.Icon fs-4"></i>
+                            </div>
+                            <span class="badge bg-light text-secondary border rounded-pill px-3 py-2">
+                                <i class="bi bi-clock me-1"></i> @s.DurationMinutes мин
+                            </span>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-2">@s.Name</h4>
+                        <p class="text-secondary small mb-4 flex-grow-1">@s.Description</p>
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <div class="fs-4 fw-extrabold text-dark">@s.Price.ToString("N0") <span class="fs-6 fw-normal text-muted">сом</span></div>
+                            <a asp-controller="Booking" asp-action="Index" asp-route-serviceId="@s.Id" class="btn btn-sm btn-primary rounded-pill px-3 py-2 fw-semibold">
+                                Выбрать <i class="bi bi-chevron-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Barbers Section -->
+<section class="py-5 bg-white border-top border-bottom" id="barbers">
+    <div class="container-fluid px-lg-5">
+        <div class="text-center max-w-xl mx-auto mb-5">
+            <span class="text-primary fw-bold text-uppercase small tracking-wide">Команда профессионалов</span>
+            <h2 class="display-6 fw-bold text-dark mb-2">Наши барберы</h2>
+            <p class="text-secondary">Каждый мастер — сертифицированный эксперт с опытом работы от 4 до 8 лет</p>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var b in barbers)
+            {
+                <div class="col-md-6 col-lg-3">
+                    <div class="card h-100 border rounded-4 bg-light overflow-hidden text-center p-4 shadow-xs">
+                        <div class="position-relative mx-auto mb-3" style="width: 110px; height: 110px;">
+                            <img src="@b.AvatarUrl" alt="@b.FullName" class="rounded-circle object-fit-cover w-100 h-100 border border-3 border-white shadow-sm" />
+                            <span class="position-absolute bottom-0 end-0 badge bg-warning text-dark rounded-pill border border-white">
+                                <i class="bi bi-star-fill"></i> @b.Rating.ToString("F1")
+                            </span>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">@b.FullName</h5>
+                        <div class="small fw-semibold text-primary mb-2">@b.Title</div>
+                        <p class="text-secondary small mb-4">@b.Bio</p>
+                        <div class="mt-auto pt-3 border-top">
+                            <a asp-controller="Booking" asp-action="Index" asp-route-barberId="@b.Id" class="btn btn-outline-dark rounded-pill w-100 fw-semibold btn-sm py-2">
+                                <i class="bi bi-calendar-plus me-1"></i> Записаться к мастеру
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section class="py-5 bg-dark text-white text-center position-relative">
+    <div class="container py-4">
+        <h2 class="display-5 fw-bold mb-3">Готовы обновить свой образ?</h2>
+        <p class="lead text-light text-opacity-75 mb-4 max-w-xl mx-auto">
+            Онлайн-запись занимает меньше минуты. Никаких ожиданий — выберите удобное время прямо сейчас!
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a asp-controller="Booking" asp-action="Index" class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-pill shadow-lg">
+                Записаться прямо сейчас
+            </a>
+        </div>
+    </div>
+</section>

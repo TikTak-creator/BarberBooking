@@ -1,0 +1,513 @@
+@using BarberBooking.Web.Models
+@{
+    ViewData["Title"] = "Онлайн-запись";
+    var services = ViewBag.Services as List<ServiceItem> ?? new List<ServiceItem>();
+    var barbers = ViewBag.Barbers as List<Barber> ?? new List<Barber>();
+    var selectedServiceId = ViewBag.SelectedServiceId as int?;
+    var selectedBarberId = ViewBag.SelectedBarberId as int?;
+}
+
+<div class="container-fluid px-lg-5 py-4">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom gap-3">
+        <div>
+            <h1 class="h2 fw-extrabold text-dark mb-1">Онлайн-запись в барбершоп</h1>
+            <p class="text-secondary mb-0">Выберите услугу, мастера и подходящее свободное время</p>
+        </div>
+        <div>
+            <a asp-controller="Booking" asp-action="Track" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold">
+                <i class="bi bi-search me-1"></i> Проверить существующую бронь
+            </a>
+        </div>
+    </div>
+
+    <!-- Stepper Navigation -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-xl-10">
+            <div class="d-flex justify-content-between position-relative px-2">
+                <div class="step-indicator active d-flex flex-column align-items-center" id="stepIndicator1">
+                    <div class="step-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold mb-1 shadow-sm" style="width: 38px; height: 38px;">1</div>
+                    <span class="small fw-bold text-dark">Услуга</span>
+                </div>
+                <div class="step-indicator d-flex flex-column align-items-center" id="stepIndicator2">
+                    <div class="step-circle bg-light text-secondary border rounded-circle d-flex align-items-center justify-content-center fw-bold mb-1" style="width: 38px; height: 38px;">2</div>
+                    <span class="small fw-bold text-secondary">Мастер</span>
+                </div>
+                <div class="step-indicator d-flex flex-column align-items-center" id="stepIndicator3">
+                    <div class="step-circle bg-light text-secondary border rounded-circle d-flex align-items-center justify-content-center fw-bold mb-1" style="width: 38px; height: 38px;">3</div>
+                    <span class="small fw-bold text-secondary">Дата и время</span>
+                </div>
+                <div class="step-indicator d-flex flex-column align-items-center" id="stepIndicator4">
+                    <div class="step-circle bg-light text-secondary border rounded-circle d-flex align-items-center justify-content-center fw-bold mb-1" style="width: 38px; height: 38px;">4</div>
+                    <span class="small fw-bold text-secondary">Контакты</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wizard Container -->
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            <div class="card border-0 bg-white rounded-4 shadow-sm p-4 p-md-5">
+
+                <!-- STEP 1: Выбор услуги -->
+                <div id="step1" class="wizard-step">
+                    <h3 class="h4 fw-bold text-dark mb-3">Шаг 1: Выберите услугу</h3>
+                    <p class="text-secondary small mb-4">Можно выбрать одну из услуг из нашего каталога</p>
+
+                    <div class="row g-3">
+                        @foreach (var s in services)
+                        {
+                            var isChecked = selectedServiceId == s.Id;
+                            <div class="col-md-6 col-lg-4">
+                                <div class="service-card-radio @(isChecked ? "selected" : "")" 
+                                     data-id="@s.Id" 
+                                     data-name="@s.Name" 
+                                     data-price="@s.Price" 
+                                     data-duration="@s.DurationMinutes">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div class="bg-light text-primary rounded-3 p-2">
+                                            <i class="bi @s.Icon fs-5"></i>
+                                        </div>
+                                        <span class="badge bg-light text-secondary border rounded-pill">
+                                            @s.DurationMinutes мин
+                                        </span>
+                                    </div>
+                                    <h5 class="fw-bold text-dark mb-1">@s.Name</h5>
+                                    <p class="text-secondary small mb-3">@s.Description</p>
+                                    <div class="fs-5 fw-extrabold text-primary">@s.Price.ToString("N0") сом</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                        <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold" id="btnStep1Next" disabled>
+                            Далее к выбору мастера <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Выбор мастера -->
+                <div id="step2" class="wizard-step d-none">
+                    <h3 class="h4 fw-bold text-dark mb-3">Шаг 2: Выберите барбера</h3>
+                    <p class="text-secondary small mb-4">Все мастера обладают сертификатами и высоким рейтингом</p>
+
+                    <div class="row g-3">
+                        @foreach (var b in barbers)
+                        {
+                            var isChecked = selectedBarberId == b.Id;
+                            <div class="col-md-6 col-lg-3">
+                                <div class="barber-card-radio text-center @(isChecked ? "selected" : "")" 
+                                     data-id="@b.Id" 
+                                     data-name="@b.FullName" 
+                                     data-title="@b.Title" 
+                                     data-avatar="@b.AvatarUrl">
+                                    <div class="position-relative mx-auto mb-2" style="width: 80px; height: 80px;">
+                                        <img src="@b.AvatarUrl" alt="@b.FullName" class="rounded-circle object-fit-cover w-100 h-100 border shadow-xs" />
+                                        <span class="position-absolute bottom-0 end-0 badge bg-warning text-dark rounded-pill border border-white small">
+                                            @b.Rating.ToString("F1")
+                                        </span>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-0">@b.FullName</h6>
+                                    <div class="text-primary small fw-semibold mb-2">@b.Title</div>
+                                    <p class="text-secondary small mb-0 line-clamp-2">@b.Bio</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-semibold" id="btnStep2Back">
+                            <i class="bi bi-arrow-left me-1"></i> Назад
+                        </button>
+                        <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold" id="btnStep2Next" disabled>
+                            Далее к дате и времени <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Дата и доступное время -->
+                <div id="step3" class="wizard-step d-none">
+                    <h3 class="h4 fw-bold text-dark mb-3">Шаг 3: Выберите дату и время</h3>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold text-dark">Дата записи</label>
+                            <input type="date" class="form-control form-control-lg rounded-3" id="bookingDateInput" 
+                                   min="@DateTime.Today.ToString("yyyy-MM-dd")" 
+                                   value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <div class="form-text">Выберите день визита. Запись доступна на 14 дней вперед.</div>
+
+                            <!-- Быстрые кнопки дат -->
+                            <div class="d-flex gap-2 mt-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1 quick-date-btn active" data-offset="0">Сегодня</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1 quick-date-btn" data-offset="1">Завтра</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill flex-grow-1 quick-date-btn" data-offset="2">Послезавтра</button>
+                            </div>
+
+                            <div class="p-3 bg-light rounded-3 mt-4 border">
+                                <div class="small text-muted mb-1">Выбранная услуга и мастер:</div>
+                                <div class="fw-bold text-dark" id="summaryService">-</div>
+                                <div class="small text-primary fw-semibold" id="summaryBarber">-</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-7">
+                            <label class="form-label fw-bold text-dark d-flex justify-content-between align-items-center">
+                                <span>Свободные интервалы времени</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small">
+                                    <i class="bi bi-shield-check"></i> Защита от накладок
+                                </span>
+                            </label>
+
+                            <!-- Лоадер -->
+                            <div id="slotsLoader" class="text-center py-5 d-none">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <div class="text-muted small mt-2">Загружаем свободные слоты мастера...</div>
+                            </div>
+
+                            <!-- Контейнер слотов -->
+                            <div id="slotsContainer" class="d-flex flex-wrap gap-2">
+                                <!-- Подгружается через AJAX -->
+                            </div>
+
+                            <div id="noSlotsMessage" class="alert alert-warning rounded-3 mt-3 d-none">
+                                <i class="bi bi-info-circle me-1"></i> На выбранную дату у мастера нет свободных слотов. Пожалуйста, выберите другую дату.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-semibold" id="btnStep3Back">
+                            <i class="bi bi-arrow-left me-1"></i> Назад
+                        </button>
+                        <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold" id="btnStep3Next" disabled>
+                            Далее к контактам <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Контакты и подтверждение -->
+                <div id="step4" class="wizard-step d-none">
+                    <h3 class="h4 fw-bold text-dark mb-3">Шаг 4: Контактные данные</h3>
+                    <p class="text-secondary small mb-4">На указанный номер будет отправлено подтверждение брони</p>
+
+                    <div class="row g-4">
+                        <div class="col-md-7">
+                            <form id="bookingFinalForm">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Ваше имя <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-lg rounded-3" id="clientName" placeholder="Адилет Садыков" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Номер телефона <span class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control form-control-lg rounded-3" id="clientPhone" placeholder="+996 555 123-456" required />
+                                    <div class="form-text">Номер в формате Кыргызстана (+996 ...)</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Email (необязательно)</label>
+                                    <input type="email" class="form-control rounded-3" id="clientEmail" placeholder="client@example.com" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Пожелание или комментарий</label>
+                                    <textarea class="form-control rounded-3" id="clientNotes" rows="2" placeholder="Например: хочу скин фейд / чай зеленый"></textarea>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Сводка записи -->
+                        <div class="col-md-5">
+                            <div class="card border rounded-4 bg-light p-4">
+                                <h5 class="fw-bold text-dark mb-3">Сводка бронирования</h5>
+                                
+                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">Услуга:</span>
+                                    <span class="fw-bold text-dark" id="finalService">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">Мастер:</span>
+                                    <span class="fw-bold text-primary" id="finalBarber">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">Дата:</span>
+                                    <span class="fw-bold text-dark" id="finalDate">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">Время:</span>
+                                    <span class="fw-bold text-dark" id="finalTime">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between pt-3">
+                                    <span class="fs-5 fw-bold text-dark">К оплате:</span>
+                                    <span class="fs-4 fw-extrabold text-primary" id="finalPrice">- сом</span>
+                                </div>
+                                <div class="small text-muted mt-2">Оплата на месте в барбершопе (наличные, QR, карта).</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ошибки -->
+                    <div id="bookingErrorAlert" class="alert alert-danger rounded-3 mt-4 d-none">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> <span id="bookingErrorMessage"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                        <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-semibold" id="btnStep4Back">
+                            <i class="bi bi-arrow-left me-1"></i> Назад
+                        </button>
+                        <button type="button" class="btn btn-success btn-lg px-5 py-2 rounded-pill fw-bold shadow-sm" id="btnSubmitBooking">
+                            <span id="btnSubmitSpinner" class="spinner-border spinner-border-sm me-2 d-none"></span>
+                            <span>Завершить запись</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Состояние формы бронирования
+    const bookingState = {
+        serviceId: null,
+        serviceName: '',
+        servicePrice: 0,
+        serviceDuration: 0,
+        barberId: null,
+        barberName: '',
+        date: document.getElementById('bookingDateInput').value,
+        timeSlot: null
+    };
+
+    // Предвыбор при переходе с главной
+    @if (selectedServiceId.HasValue)
+    {
+        <text>
+        const initialService = document.querySelector(`.service-card-radio[data-id="@selectedServiceId"]`);
+        if (initialService) initialService.click();
+        </text>
+    }
+    @if (selectedBarberId.HasValue)
+    {
+        <text>
+        const initialBarber = document.querySelector(`.barber-card-radio[data-id="@selectedBarberId"]`);
+        if (initialBarber) initialBarber.click();
+        </text>
+    }
+
+    // Выбор услуги
+    document.querySelectorAll('.service-card-radio').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.service-card-radio').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            bookingState.serviceId = parseInt(card.dataset.id);
+            bookingState.serviceName = card.dataset.name;
+            bookingState.servicePrice = parseFloat(card.dataset.price);
+            bookingState.serviceDuration = parseInt(card.dataset.duration);
+            document.getElementById('btnStep1Next').removeAttribute('disabled');
+        });
+    });
+
+    // Выбор мастера
+    document.querySelectorAll('.barber-card-radio').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.barber-card-radio').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            bookingState.barberId = parseInt(card.dataset.id);
+            bookingState.barberName = card.dataset.name;
+            document.getElementById('btnStep2Next').removeAttribute('disabled');
+        });
+    });
+
+    // Навигация по шагам
+    function setStep(stepNum) {
+        for (let i = 1; i <= 4; i++) {
+            const stepEl = document.getElementById(`step${i}`);
+            const indEl = document.getElementById(`stepIndicator${i}`);
+            const circle = indEl.querySelector('.step-circle');
+            
+            if (i === stepNum) {
+                stepEl.classList.remove('d-none');
+                circle.className = 'step-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold mb-1 shadow-sm';
+            } else if (i < stepNum) {
+                stepEl.classList.add('d-none');
+                circle.className = 'step-circle bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold mb-1';
+                circle.innerHTML = '<i class="bi bi-check"></i>';
+            } else {
+                stepEl.classList.add('d-none');
+                circle.className = 'step-circle bg-light text-secondary border rounded-circle d-flex align-items-center justify-content-center fw-bold mb-1';
+                circle.textContent = i;
+            }
+        }
+        window.scrollTo({ top: 100, behavior: 'smooth' });
+    }
+
+    document.getElementById('btnStep1Next').addEventListener('click', () => setStep(2));
+    document.getElementById('btnStep2Back').addEventListener('click', () => setStep(1));
+    document.getElementById('btnStep2Next').addEventListener('click', () => {
+        setStep(3);
+        document.getElementById('summaryService').textContent = bookingState.serviceName + ' (' + bookingState.serviceDuration + ' мин)';
+        document.getElementById('summaryBarber').textContent = bookingState.barberName;
+        loadSlots();
+    });
+    document.getElementById('btnStep3Back').addEventListener('click', () => setStep(2));
+    document.getElementById('btnStep3Next').addEventListener('click', () => {
+        setStep(4);
+        document.getElementById('finalService').textContent = bookingState.serviceName;
+        document.getElementById('finalBarber').textContent = bookingState.barberName;
+        document.getElementById('finalDate').textContent = new Date(bookingState.date).toLocaleDateString('ru-RU');
+        document.getElementById('finalTime').textContent = bookingState.timeSlot;
+        document.getElementById('finalPrice').textContent = bookingState.servicePrice.toLocaleString('ru-RU') + ' сом';
+    });
+    document.getElementById('btnStep4Back').addEventListener('click', () => setStep(3));
+
+    // Быстрые кнопки дат
+    document.querySelectorAll('.quick-date-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.quick-date-btn').forEach(b => {
+                b.classList.remove('btn-outline-primary', 'active');
+                b.classList.add('btn-outline-secondary');
+            });
+            btn.classList.add('btn-outline-primary', 'active');
+            btn.classList.remove('btn-outline-secondary');
+
+            const offset = parseInt(btn.dataset.offset);
+            const d = new Date();
+            d.setDate(d.getDate() + offset);
+            const dateStr = d.toISOString().split('T')[0];
+            document.getElementById('bookingDateInput').value = dateStr;
+            bookingState.date = dateStr;
+            loadSlots();
+        });
+    });
+
+    document.getElementById('bookingDateInput').addEventListener('change', (e) => {
+        bookingState.date = e.target.value;
+        loadSlots();
+    });
+
+    // AJAX загрузка свободных слотов
+    async function loadSlots() {
+        const container = document.getElementById('slotsContainer');
+        const loader = document.getElementById('slotsLoader');
+        const noSlots = document.getElementById('noSlotsMessage');
+        const nextBtn = document.getElementById('btnStep3Next');
+
+        nextBtn.setAttribute('disabled', 'true');
+        bookingState.timeSlot = null;
+        container.innerHTML = '';
+        noSlots.classList.add('d-none');
+        loader.classList.remove('d-none');
+
+        try {
+            const url = `/api/booking/slots?barberId=${bookingState.barberId}&serviceId=${bookingState.serviceId}&date=${bookingState.date}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            loader.classList.add('d-none');
+
+            if (!data.success || !data.slots || data.slots.length === 0) {
+                noSlots.classList.remove('d-none');
+                return;
+            }
+
+            let hasAnyAvailable = false;
+            data.slots.forEach(slot => {
+                const btn = document.createElement('div');
+                btn.className = `time-slot-btn ${slot.isAvailable ? '' : 'disabled'}`;
+                btn.textContent = slot.time;
+                btn.dataset.time = slot.time;
+
+                if (slot.isAvailable) {
+                    hasAnyAvailable = true;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        bookingState.timeSlot = slot.time;
+                        nextBtn.removeAttribute('disabled');
+                    });
+                } else if (slot.reason) {
+                    btn.title = slot.reason;
+                }
+
+                container.appendChild(btn);
+            });
+
+            if (!hasAnyAvailable) {
+                noSlots.classList.remove('d-none');
+            }
+        } catch (err) {
+            loader.classList.add('d-none');
+            noSlots.classList.remove('d-none');
+            console.error(err);
+        }
+    }
+
+    // Отправка формы бронирования (Создание записи)
+    document.getElementById('btnSubmitBooking').addEventListener('click', async () => {
+        const name = document.getElementById('clientName').value.trim();
+        const phone = document.getElementById('clientPhone').value.trim();
+        const email = document.getElementById('clientEmail').value.trim();
+        const notes = document.getElementById('clientNotes').value.trim();
+        const errorAlert = document.getElementById('bookingErrorAlert');
+        const errorMsg = document.getElementById('bookingErrorMessage');
+        const spinner = document.getElementById('btnSubmitSpinner');
+        const submitBtn = document.getElementById('btnSubmitBooking');
+
+        errorAlert.classList.add('d-none');
+
+        if (!name || name.length < 2) {
+            errorMsg.textContent = 'Пожалуйста, введите ваше имя (не менее 2 символов).';
+            errorAlert.classList.remove('d-none');
+            return;
+        }
+
+        if (!phone || phone.length < 9) {
+            errorMsg.textContent = 'Пожалуйста, введите корректный номер телефона.';
+            errorAlert.classList.remove('d-none');
+            return;
+        }
+
+        submitBtn.setAttribute('disabled', 'true');
+        spinner.classList.remove('d-none');
+
+        const payload = {
+            serviceId: bookingState.serviceId,
+            barberId: bookingState.barberId,
+            date: bookingState.date,
+            timeSlot: bookingState.timeSlot,
+            clientName: name,
+            clientPhone: phone,
+            clientEmail: email || null,
+            notes: notes || null
+        };
+
+        try {
+            const res = await fetch('/api/booking/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await res.json();
+            spinner.classList.add('d-none');
+            submitBtn.removeAttribute('disabled');
+
+            if (res.ok && result.success) {
+                // Успешно! Перенаправляем на экран подтверждения
+                window.location.href = result.redirectUrl;
+            } else {
+                // Ошибка пересечения или валидации
+                errorMsg.textContent = result.message || 'Ошибка бронирования. Попробуйте еще раз.';
+                errorAlert.classList.remove('d-none');
+            }
+        } catch (err) {
+            spinner.classList.add('d-none');
+            submitBtn.removeAttribute('disabled');
+            errorMsg.textContent = 'Не удалось связаться с сервером. Проверьте подключение.';
+            errorAlert.classList.remove('d-none');
+        }
+    });
+</script>
+}

@@ -1,0 +1,61 @@
+@model List<BarberBooking.Web.Models.Barber>
+@{
+    ViewData["Title"] = "Управление мастерами";
+}
+
+<div class="container-fluid px-lg-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-extrabold text-dark mb-1">Команда барберов</h1>
+            <p class="text-secondary mb-0">Мастера барбершопа, их рабочие графики и квалификации</p>
+        </div>
+        <a asp-action="Timeline" class="btn btn-outline-dark rounded-pill px-4 fw-semibold">
+            <i class="bi bi-arrow-left me-1"></i> К расписанию
+        </a>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var b in Model)
+        {
+            <div class="col-md-6 col-lg-3">
+                <div class="card border-0 bg-white rounded-4 shadow-sm h-100 p-4 text-center">
+                    <div class="position-relative mx-auto mb-3" style="width: 100px; height: 100px;">
+                        <img src="@b.AvatarUrl" alt="@b.FullName" class="rounded-circle w-100 h-100 object-fit-cover border border-3 border-light shadow-xs" />
+                        <span class="position-absolute bottom-0 end-0 badge rounded-circle p-2 border border-white" style="background-color: @b.BadgeColor; width: 24px; height: 24px;" title="Цвет в расписании"></span>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-1">@b.FullName</h5>
+                    <div class="small fw-semibold text-primary mb-2">@b.Title</div>
+                    <p class="text-secondary small mb-3">@b.Bio</p>
+
+                    <div class="bg-light p-3 rounded-3 text-start small mb-3">
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Опыт:</span>
+                            <span class="fw-bold text-dark">@b.ExperienceYears лет</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Рейтинг:</span>
+                            <span class="fw-bold text-warning"><i class="bi bi-star-fill"></i> @b.Rating.ToString("F1")</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Смена:</span>
+                            <span class="fw-bold text-dark">@b.WorkStartTime.ToString(@"hh\:mm") – @b.WorkEndTime.ToString(@"hh\:mm")</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Статус:</span>
+                            <span class="badge @(b.IsActive ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger") rounded-pill">
+                                @(b.IsActive ? "Работает" : "Не активен")
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto">
+                        <a asp-action="Timeline" class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-semibold">
+                            Смотреть в расписании
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

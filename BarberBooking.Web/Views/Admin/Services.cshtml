@@ -1,0 +1,42 @@
+@model List<BarberBooking.Web.Models.ServiceItem>
+@{
+    ViewData["Title"] = "Услуги и прайс-лист";
+}
+
+<div class="container-fluid px-lg-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-extrabold text-dark mb-1">Услуги барбершопа</h1>
+            <p class="text-secondary mb-0">Каталог услуг, длительность выполнения и стоимость</p>
+        </div>
+        <a asp-action="Timeline" class="btn btn-outline-dark rounded-pill px-4 fw-semibold">
+            <i class="bi bi-arrow-left me-1"></i> К расписанию
+        </a>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var s in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 bg-white rounded-4 shadow-sm p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="bg-light text-primary rounded-3 p-3">
+                            <i class="bi @s.Icon fs-4"></i>
+                        </div>
+                        <span class="badge bg-light text-secondary border rounded-pill px-3 py-2">
+                            <i class="bi bi-clock me-1"></i> @s.DurationMinutes минут
+                        </span>
+                    </div>
+
+                    <h4 class="fw-bold text-dark mb-2">@s.Name</h4>
+                    <p class="text-secondary small mb-4 flex-grow-1">@s.Description</p>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <span class="badge bg-light text-muted border rounded-pill">@s.Category</span>
+                        <div class="fs-4 fw-extrabold text-primary">@s.Price.ToString("N0") <span class="fs-6 fw-normal text-muted">сом</span></div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
