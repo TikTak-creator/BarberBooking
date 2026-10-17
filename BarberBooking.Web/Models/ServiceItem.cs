@@ -16,6 +16,7 @@ public class ServiceItem
 
     [Required]
     [Column(TypeName = "decimal(12,2)")]
+    [Microsoft.AspNetCore.Mvc.ModelBinder(typeof(BarberBooking.Web.Services.MoneyModelBinder))]
     public decimal Price { get; set; }
 
     [Required]

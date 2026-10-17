@@ -63,7 +63,7 @@
                                 <div class="service-card-radio @(isChecked ? "selected" : "")" 
                                      data-id="@s.Id" 
                                      data-name="@s.Name" 
-                                     data-price="@s.Price" 
+                                     data-price="@s.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                      data-duration="@s.DurationMinutes">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <div class="bg-light text-primary rounded-3 p-2">
@@ -75,7 +75,7 @@
                                     </div>
                                     <h5 class="fw-bold text-dark mb-1">@s.Name</h5>
                                     <p class="text-secondary small mb-3">@s.Description</p>
-                                    <div class="fs-5 fw-extrabold text-primary">@s.Price.ToString("N0") сом</div>
+                                    <div class="fs-5 fw-extrabold text-primary">@s.Price.ToString("N2") сом</div>
                                 </div>
                             </div>
                         }
@@ -347,7 +347,7 @@
         document.getElementById('finalBarber').textContent = bookingState.barberName;
         document.getElementById('finalDate').textContent = new Date(bookingState.date + 'T12:00:00').toLocaleDateString('ru-RU');
         document.getElementById('finalTime').textContent = bookingState.timeSlot;
-        document.getElementById('finalPrice').textContent = bookingState.servicePrice.toLocaleString('ru-RU') + ' сом';
+        document.getElementById('finalPrice').textContent = bookingState.servicePrice.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' сом';
     });
     document.getElementById('btnStep4Back').addEventListener('click', () => setStep(3));
 

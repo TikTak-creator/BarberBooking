@@ -20,6 +20,10 @@ async function main() {
   const submit = async selector => await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click(selector)]);
   const fill = async (selector, value) => { await page.$eval(selector, input => {input.value='';}); await page.type(selector,value); };
   try {
+    await go('/Account/Login'); await fill('#UserName',config.owner); await fill('#Password',config.password); await submit('form[action="/Account/Login"] button');
+    await go('/admin/services/edit?id=1'); await fill('#Price','800.50'); await submit('form[action="/admin/services/edit"] button');
+    if(page.url().includes('/edit'))throw new Error('Owner could not save a fractional catalog price.');
+    await submit('form[action="/Account/Logout"] button');
     await go('/'); await shot('01-home'); await shot('02-home-full',true);
     await go('/Account/Login'); await shot('03-login');
     await go('/Account/Register'); await shot('04-register',true);
@@ -37,9 +41,12 @@ async function main() {
     await page.$eval('#bookingDateInput',(input,value)=>{input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));},day);
     await page.waitForSelector('.time-slot-btn:not(:disabled)'); await page.click('.time-slot-btn:not(:disabled)'); await shot('07-booking-time');
     await page.click('#btnStep3Next'); await fill('#clientName','Тимур · тестовый клиент'); await fill('#clientPhone','+996555000001');
-    await fill('#clientNotes','Демонстрационная запись для проверки интерфейса.'); await shot('08-booking-contacts');
+    await fill('#clientNotes','Демонстрационная запись для проверки интерфейса.');
+    if(!await page.$eval('#finalPrice',element=>element.textContent.includes('800,50')))throw new Error('Fractional price lost in wizard preview');
+    await shot('08-booking-contacts');
     await submit('#btnSubmitBooking');
     if(!page.url().includes('Confirmation')) throw new Error('Booking wizard failed: '+await page.$eval('#bookingErrorMessage',element=>element.textContent).catch(()=>page.url()));
+    if(!await page.$eval('.ticket-details',element=>element.textContent.includes('800,50')))throw new Error('Fractional price lost in ticket');
     await shot('09-ticket'); await go('/Account/MyBookings'); await shot('10-my-bookings');
     await go('/Account/Profile'); await shot('11-profile'); await go('/Account/Security'); await shot('12-security');
     for(const [url,name] of [['/','13-mobile-home'],['/Account/MyBookings','14-mobile-bookings'],['/Account/Security','15-mobile-security']]) {

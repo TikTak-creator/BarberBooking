@@ -1,6 +1,6 @@
 name: bladez
 x-web: &web
-  image: bladez-web:1.0.1
+  image: bladez-web:1.0.2
   build:
     context: ../..
     dockerfile: deploy/linux/Dockerfile

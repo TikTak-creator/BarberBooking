@@ -65,6 +65,14 @@ internal static class TestSuite
             response=await anonymous.PostAsync("/Account/Login",new FormUrlEncodedContent(new Dictionary<string,string>{{"UserName","testowner"},{"Password",ownerPassword}})); Check(response.StatusCode==HttpStatusCode.BadRequest,"Login CSRF rejected");
             response=await Login(owner,"testowner",ownerPassword); Check(response.StatusCode==HttpStatusCode.Redirect,"Owner password login");
             Check(response.Headers.GetValues("Set-Cookie").Any(c=>c.Contains("Bladez.Session=")&&c.Contains("httponly",StringComparison.OrdinalIgnoreCase)&&c.Contains("secure",StringComparison.OrdinalIgnoreCase)),"Authentication cookie is HttpOnly and Secure over HTTPS");
+            Dictionary<string,string> PriceForm(string price)=>new(){["Id"]="1",["Name"]="Мужская стрижка",["Description"]="QA catalog",["Price"]=price,["DurationMinutes"]="30",["Category"]="Стрижки",["IsActive"]="true"};
+            foreach(var price in new[]{"800.50","800,50"})
+            {
+                response=await Form(owner,"/admin/services/edit?id=1","/admin/services/edit",PriceForm(price));
+                Check(response.StatusCode==HttpStatusCode.Redirect,"Owner can enter a fractional price with separator "+price[3]);
+            }
+            response=await Form(owner,"/admin/services/edit?id=1","/admin/services/edit",PriceForm("12.345"));
+            using(var scope=app.Services.CreateScope())Check(response.StatusCode==HttpStatusCode.OK && (await scope.ServiceProvider.GetRequiredService<BarberDbContext>().Services.AsNoTracking().SingleAsync(s=>s.Id==1)).Price==800.50m,"Invalid price precision cannot silently round or alter the catalog");
             var password="TestOnly_A1_"+Guid.NewGuid().ToString("N");
             await Register(first,"customer_one",password); await Register(second,"customer_two",password);
             using(var scope=app.Services.CreateScope())
@@ -85,7 +93,7 @@ internal static class TestSuite
             response=await other.GetAsync("/Booking/Confirmation?code="+code);Check(response.StatusCode==HttpStatusCode.NotFound,"Customer cannot read another customer's ticket");
             response=await anonymous.GetAsync("/Booking/Confirmation?code="+code);Check(response.StatusCode==HttpStatusCode.NotFound,"Booking code alone reveals no customer data");
             response=await anonymous.GetAsync("/Booking/Track?phone=%2B996555123456&code="+code);var html=await response.Content.ReadAsStringAsync();Check(!html.Contains("Client One")&&!html.Contains("Client Two")&&!html.Contains("+996555123456"),"Legacy phone/code lookup does not disclose bookings");
-            response=await winner.GetAsync("/Booking/Confirmation?code="+code);html=await response.Content.ReadAsStringAsync();Check(response.IsSuccessStatusCode&&html.Contains("800")&&!html.Contains("1 сом"),"Server uses catalog price, ignoring injected price/customer ID");
+            response=await winner.GetAsync("/Booking/Confirmation?code="+code);html=await response.Content.ReadAsStringAsync();Check(response.IsSuccessStatusCode&&html.Contains("800,50")&&!html.Contains("1 сом"),"Ticket preserves fractional catalog price and ignores injected price/customer ID");
             Appointment appointment;
             using(var scope=app.Services.CreateScope())appointment=await scope.ServiceProvider.GetRequiredService<BarberDbContext>().Appointments.AsNoTracking().SingleAsync(a=>a.BookingCode==code);
             response=await Form(other,"/Account/MyBookings","/Booking/Cancel",new(){["code"]=code,["version"]=appointment.Version.ToString(),["reason"]="tamper"});
