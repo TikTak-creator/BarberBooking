@@ -10,9 +10,10 @@ using MySql.Data.MySqlClient;
 namespace Bladez.Tests;
 public static class TestRunner
 {
-public static async Task Main()
+public static async Task Main(string[] args)
 {
 var repo = FindRepository();
+if (args.Contains("--host")) { await HostSuite.RunAsync(repo, args.Contains("--browser")); return; }
 var output = Path.Combine(repo, ".artifacts", "tests-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(output);
 Environment.SetEnvironmentVariable("BLADEZ_DATA", output);

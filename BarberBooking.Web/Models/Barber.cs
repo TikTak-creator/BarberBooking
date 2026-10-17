@@ -12,20 +12,20 @@ public class Barber
 
     [Required(ErrorMessage = "Укажите квалификацию / должность")]
     [StringLength(100)]
-    public string Title { get; set; } = "Senior Barber";
+    public string Title { get; set; } = "Мастер";
 
     [StringLength(500)]
     public string Bio { get; set; } = string.Empty;
 
     [StringLength(255)]
-    public string AvatarUrl { get; set; } = "/images/barbers/default.png";
+    public string AvatarUrl { get; set; } = "/images/barber.svg";
 
     [StringLength(20)]
     public string BadgeColor { get; set; } = "#F59E0B"; // Hex color for calendar cards
 
-    public double Rating { get; set; } = 5.0;
+    public double Rating { get; set; }
 
-    public int ExperienceYears { get; set; } = 5;
+    public int ExperienceYears { get; set; }
 
     public bool IsActive { get; set; } = true;
 

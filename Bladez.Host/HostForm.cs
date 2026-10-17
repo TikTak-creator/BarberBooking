@@ -115,6 +115,7 @@ public sealed class HostForm : Form
         Button("Открыть папку данных", 362, 438, (_, _) => Process.Start(new ProcessStartInfo("explorer.exe", profile) { UseShellExecute = true }), width: 280);
         Button("Свернуть в трей", 668, 438, (_, _) => WindowState = FormWindowState.Minimized, width: 230);
         body.Controls.Add(new Label { Text = "Резервная копия зашифрована отдельным паролем. На время копирования сервер\nостанавливается. Сохраните копию и пароль в разных местах; без них данные не восстановить.", AutoSize = true, ForeColor = muted, Location = new Point(36, 515) });
+        Button("Восстановить доступ владельца…", 36, 575, async (_, _) => await Run(RecoverOwner), width: 360);
         UpdateStatus();
     }
     private void UpdateStatus()
@@ -169,6 +170,17 @@ public sealed class HostForm : Form
         return first.Text;
     }
     private void RestoreWindow() { Show(); WindowState = FormWindowState.Normal; Activate(); tray.Visible = false; }
+    private async Task RecoverOwner()
+    {
+        using var dialog = new Form { Text = "Локальное восстановление владельца", ClientSize = new Size(530, 220), StartPosition = FormStartPosition.CenterParent, Font = Font };
+        var label = new Label { Text = "Только для владельца с доступом к компьютеру сервера.\nСтарые сеансы, приложение MFA и резервные коды будут сброшены.\nВведите существующий логин владельца:", AutoSize = true, Location = new Point(22, 20) };
+        var name = new TextBox { Location = new Point(22, 100), Width = 480, MaxLength = 40 };
+        var ok = new Button { Text = "Продолжить", DialogResult = DialogResult.OK, Location = new Point(320, 156), Size = new Size(180, 40) };
+        dialog.Controls.AddRange([label, name, ok]); dialog.AcceptButton = ok;
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+        var secret = AskPassword("Новый пароль владельца (Aa, цифры, 12+)", true); if (secret is null) return;
+        await manager.RecoverOwnerAsync(name.Text, secret);
+    }
     private async Task ExitAsync()
     {
         if (busy || closing) return;

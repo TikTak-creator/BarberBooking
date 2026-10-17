@@ -94,6 +94,31 @@ builder.Services.AddRateLimiter(o =>
             _ => new FixedWindowRateLimiterOptions { PermitLimit = limit, Window = TimeSpan.FromMinutes(minutes), QueueLimit = 0, AutoReplenishment = true }));
 });
 var app = builder.Build();
+if (args.Contains("--recover-owner"))
+{
+    // Offline administrator operation. No HTTP route invokes this path.
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<BarberDbContext>();
+    if (!await db.ShopSettings.AnyAsync(s => s.Id == 1 && s.DataKeyId == vault.Fingerprint("identity", "DataKey")))
+        throw new InvalidOperationException("The host data key does not match this database.");
+    var input = JsonSerializer.Deserialize<BootstrapModel>(await Console.In.ReadToEndAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? throw new InvalidOperationException("Recovery input required.");
+    if (input.Password.Length is < 12 or > 128) throw new InvalidOperationException("Invalid password length.");
+    var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var user = await users.FindByNameAsync(input.UserName);
+    if (user is null || !await users.IsInRoleAsync(user, Roles.Owner)) throw new InvalidOperationException("An existing owner login is required.");
+    await using var transaction = await db.Database.BeginTransactionAsync();
+    var result = await users.ResetPasswordAsync(user, await users.GeneratePasswordResetTokenAsync(user), input.Password);
+    if (!result.Succeeded) throw new InvalidOperationException("The new password does not meet the account policy.");
+    await users.SetTwoFactorEnabledAsync(user, false); await users.ResetAuthenticatorKeyAsync(user);
+    await users.GenerateNewTwoFactorRecoveryCodesAsync(user, 0);
+    await users.SetLockoutEndDateAsync(user, null); await users.ResetAccessFailedCountAsync(user);
+    user.IsActive = true; user.MustChangePassword = false;
+    if (!(await users.UpdateAsync(user)).Succeeded) throw new InvalidOperationException("Owner recovery failed.");
+    await users.UpdateSecurityStampAsync(user);
+    db.AuditEntries.Add(new AuditEntry { ActorId = user.Id, Action = "host.owner_recovered", Target = user.Id });
+    await db.SaveChangesAsync(); await transaction.CommitAsync();
+    Console.WriteLine("BLADEZ_OWNER_RECOVERED"); return;
+}
 if (args.Contains("--initialize") || args.Contains("--migrate"))
 {
     using var scope = app.Services.CreateScope();

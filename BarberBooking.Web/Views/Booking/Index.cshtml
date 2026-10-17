@@ -91,7 +91,7 @@
                 <!-- STEP 2: Выбор мастера -->
                 <div id="step2" class="wizard-step d-none">
                     <h3 class="h4 fw-bold text-dark mb-3">Шаг 2: Выберите барбера</h3>
-                    <p class="text-secondary small mb-4">Все мастера обладают сертификатами и высоким рейтингом</p>
+                    <p class="text-secondary small mb-4">Выберите специалиста. Свободное время зависит от его смены и текущих записей.</p>
 
                     <div class="row g-3">
                         @foreach (var b in barbers)
@@ -105,9 +105,6 @@
                                      data-avatar="@b.AvatarUrl">
                                     <div class="position-relative mx-auto mb-2" style="width: 80px; height: 80px;">
                                         <img src="@b.AvatarUrl" alt="@b.FullName" class="rounded-circle object-fit-cover w-100 h-100 border shadow-xs" />
-                                        <span class="position-absolute bottom-0 end-0 badge bg-warning text-dark rounded-pill border border-white small">
-                                            @b.Rating.ToString("F1")
-                                        </span>
                                     </div>
                                     <h6 class="fw-bold text-dark mb-0">@b.FullName</h6>
                                     <div class="text-primary small fw-semibold mb-2">@b.Title</div>

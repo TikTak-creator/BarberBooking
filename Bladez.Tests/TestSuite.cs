@@ -115,7 +115,10 @@ internal static class TestSuite
                 && visibleVisits.All(v=>v.RootElement.GetProperty("clientPhone").GetString()!.StartsWith("•••")),"Barber sees only assigned schedule and masked contact");
             foreach(var visit in visibleVisits)visit.Dispose();
             response=await barber.GetAsync("/admin/team");Check(response.StatusCode==HttpStatusCode.Redirect&&response.Headers.Location!.ToString().Contains("Denied"),"Barber cannot manage accounts");
-            response=await owner.GetAsync("/admin/settings");html=await response.Content.ReadAsStringAsync();Check(!html.Contains(vault.ReadSecrets().DatabaseAdminPassword)&&!html.Contains(vault.ReadSecrets().DatabaseUserPassword)&&!html.Contains("secrets.vault"),"Server/database secrets absent from owner HTML");
+            response=await owner.GetAsync("/admin/settings");html=await response.Content.ReadAsStringAsync();
+            var hostSecrets=vault.ReadSecrets();
+            Check(new[]{hostSecrets.DatabaseAdminPassword,hostSecrets.DatabaseUserPassword,new MySqlConnectionStringBuilder(hostSecrets.ConnectionString).Password}
+                .Where(s=>!string.IsNullOrEmpty(s)).All(s=>!html.Contains(s))&&!html.Contains("secrets.vault"),"Server/database secrets absent from owner HTML");
             await Form(first,"/Account/Security","/Account/BeginTwoFactor",new(){["password"]=password});
             string key;
             using(var scope=app.Services.CreateScope()){var manager=scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();key=(await manager.GetAuthenticatorKeyAsync((await manager.FindByNameAsync("customer_one"))!))!;}

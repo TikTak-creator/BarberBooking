@@ -43,7 +43,7 @@ public sealed class ServerManager(string directory, string serverDirectory, IPro
         catch { await StopAsync(); throw; }
     }
 
-    public async Task StartAsync()
+    public async Task StartAsync(string? cachedArchive = null)
     {
         Lock();
         if (!Configured) throw new InvalidOperationException("Сначала завершите мастер настройки.");
@@ -51,7 +51,7 @@ public sealed class ServerManager(string directory, string serverDirectory, IPro
         try
         {
             var vault = new DataVault(root);
-            await mysql.DownloadAsync();
+            await mysql.DownloadAsync(cachedArchive);
             await mysql.StartAsync(Settings, vault);
             await MigrateAsync(vault, null);
             await StartWebAsync();
@@ -114,6 +114,20 @@ public sealed class ServerManager(string directory, string serverDirectory, IPro
             await Task.Delay(500);
         }
         throw new TimeoutException("Сайт не подтвердил готовность. Данные сохранены.");
+    }
+
+    public async Task RecoverOwnerAsync(string userName, string password)
+    {
+        Lock();
+        var vault = new DataVault(root);
+        await mysql.StartAsync(Settings, vault);
+        var info = WebInfo(); info.ArgumentList.Add("--recover-owner");
+        using var process = Process.Start(info) ?? throw new InvalidOperationException("Не удалось запустить восстановление.");
+        var output = process.StandardOutput.ReadToEndAsync(); var errors = process.StandardError.ReadToEndAsync();
+        await process.StandardInput.WriteAsync(JsonSerializer.Serialize(new { UserName = userName, Password = password })); process.StandardInput.Close();
+        await process.WaitForExitAsync(); var message = await output; await errors;
+        if (process.ExitCode != 0 || !message.Contains("BLADEZ_OWNER_RECOVERED")) throw new InvalidOperationException("Восстановление не выполнено. Проверьте существующий логин владельца и требования к новому паролю.");
+        progress?.Report("Пароль владельца изменён, старые сеансы и MFA сброшены. Подключите второй фактор заново.");
     }
 
     public async Task StopAsync()
