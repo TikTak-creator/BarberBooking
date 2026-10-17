@@ -1,0 +1,96 @@
+name: bladez
+x-web: &web
+  image: bladez-web:1.0.0
+  build:
+    context: ../..
+    dockerfile: deploy/linux/Dockerfile
+  user: "1654:1654"
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=64m
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  volumes:
+    - ./private/appdata:/var/lib/bladez
+    - ./private/ca.pem:/run/secrets/mysql_ca:ro
+  environment: &web-env
+    BLADEZ_DATA: /var/lib/bladez
+    BLADEZ_LISTEN_URL: http://0.0.0.0:8080
+    BLADEZ_PUBLIC_URL: https://${BLADEZ_DOMAIN:?Run install.sh first}
+    BLADEZ_TRUSTED_PROXY: 172.30.89.10
+    BLADEZ_CONNECTION_FILE: /run/secrets/app_connection
+    ASPNETCORE_ENVIRONMENT: Production
+  networks: [frontend, database]
+
+services:
+  db:
+    image: mysql:8.4.10
+    restart: unless-stopped
+    command: [--require-secure-transport=ON, --ssl-ca=/certs/ca.pem, --ssl-cert=/certs/server.pem, --ssl-key=/certs/server-key.pem, --local-infile=OFF, --mysqlx=OFF]
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/root_password
+      MYSQL_DATABASE: bladez_business
+    volumes:
+      - ./private/mysql:/var/lib/mysql
+      - ./private/db-certs:/certs:ro
+      - ./private/init:/docker-entrypoint-initdb.d:ro
+      - ./private/root-password:/run/secrets/root_password:ro
+      - ./private/root-client.cnf:/run/secrets/root-client.cnf:ro
+    healthcheck:
+      test: [CMD, mysql, --defaults-extra-file=/run/secrets/root-client.cnf, -Nse, SELECT 1]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+    networks: [database]
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "3"}}
+
+  app:
+    <<: *web
+    restart: unless-stopped
+    volumes:
+      - ./private/appdata:/var/lib/bladez
+      - ./private/ca.pem:/run/secrets/mysql_ca:ro
+      - ./private/app-connection:/run/secrets/app_connection:ro
+    depends_on:
+      db: {condition: service_healthy}
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "3"}}
+
+  migrate:
+    <<: *web
+    profiles: [operations]
+    restart: "no"
+    command: [--migrate]
+    environment:
+      <<: *web-env
+      BLADEZ_CONNECTION_FILE: /run/secrets/migration_connection
+      BLADEZ_BOOTSTRAP_FILE: /run/secrets/bootstrap.json
+    volumes:
+      - ./private/appdata:/var/lib/bladez
+      - ./private/ca.pem:/run/secrets/mysql_ca:ro
+      - ./private/migration-connection:/run/secrets/migration_connection:ro
+      - ./private/bootstrap.json:/run/secrets/bootstrap.json:ro
+    depends_on:
+      db: {condition: service_healthy}
+
+  proxy:
+    image: caddy:2.11.7-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      BLADEZ_DOMAIN: ${BLADEZ_DOMAIN}
+      BLADEZ_ACME_EMAIL: ${BLADEZ_ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./private/caddy-data:/data
+      - ./private/caddy-config:/config
+    networks:
+      frontend: {ipv4_address: 172.30.89.10}
+    depends_on: [app]
+    logging: {driver: json-file, options: {max-size: 10m, max-file: "3"}}
+
+networks:
+  frontend:
+    ipam: {config: [{subnet: 172.30.89.0/24}]}
+  database:
+    internal: true

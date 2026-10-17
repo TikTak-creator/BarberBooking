@@ -1,0 +1,10 @@
+@model ApplicationUser
+@{ ViewData["Title"] = "Профиль"; }
+<section class="page-width account-page"><partial name="_AccountNav" /><div class="section-heading"><div><span class="tiny-caps text-primary">ПРОСТО О ВАС</span><h1>Личный профиль</h1></div></div>
+<div class="settings-grid"><div class="panel-card"><h2>Контактные данные</h2><p class="muted">Логин: <strong>@Model.UserName</strong>. Контакты не открывают доступ к чужим записям.</p><div asp-validation-summary="All" class="validation-summary"></div>
+<form asp-action="Profile" method="post"><label for="displayName">Ваше имя</label><input id="displayName" name="displayName" value="@Model.DisplayName" class="form-control" required maxlength="100" />
+<label for="email">Email</label><input id="email" name="email" value="@Model.Email" class="form-control" type="email" maxlength="100" /><small class="muted">@(Model.EmailConfirmed ? "Email подтверждён" : "Email не подтверждён")</small>
+<label for="phone">Телефон</label><input id="phone" name="phone" value="@Model.PhoneNumber" class="form-control" autocomplete="tel" maxlength="30" placeholder="+996 …" /><small class="muted">Телефон сохраняется для удобства. SMS-подтверждение не подключено.</small>
+<button class="btn btn-primary rounded-pill mt-4">Сохранить профиль</button></form></div>
+<aside class="panel-card soft-panel"><i class="bi bi-envelope-check panel-symbol"></i><h2>Подтвердите почту</h2><p class="muted">После настройки почты салоном можно подтвердить email и восстанавливать пароль через него.</p>
+<form asp-action="SendConfirmation" method="post"><button class="btn btn-outline-primary rounded-pill">Отправить код подтверждения</button></form><a href="/Account/ConfirmEmail" class="d-block mt-3">Уже есть код</a><hr /><a href="/Account/ChangePassword">Изменить пароль <i class="bi bi-arrow-up-right"></i></a></aside></div></section>

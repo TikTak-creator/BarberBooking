@@ -8,3 +8,15 @@ obj/
 publish/
 capture_screenshots.ps1
 test_app.ps1
+.artifacts/
+release/
+server-data/
+*.secrets.json
+.env
+.env.*
+!.env.example
+**/data-protection/
+**/master.key
+**/secrets.vault
+deploy/linux/private/
+deploy/linux/backups/

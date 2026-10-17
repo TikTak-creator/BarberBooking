@@ -1,0 +1,9 @@
+@model LoginModel
+@{ ViewData["Title"] = "Войти"; }
+<div class="auth-layout"><aside class="auth-story"><span class="tiny-caps">ЛИЧНОЕ ПРОСТРАНСТВО</span><h1>Ваш следующий<br />визит — ближе.</h1><p>Записи, история и управление аккаунтом в одном месте.</p><i class="bi bi-scissors auth-art"></i><small><i class="bi bi-shield-lock"></i> Вход для клиентов и команды салона</small></aside>
+<section class="auth-card"><span class="tiny-caps text-primary">С ВОЗВРАЩЕНИЕМ</span><h2>Войдите в аккаунт</h2><p class="muted">Используйте свой логин и пароль.</p><div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+<form asp-action="Login" method="post"><input asp-for="ReturnUrl" type="hidden" /><label asp-for="UserName">Логин</label><input asp-for="UserName" class="form-control" autocomplete="username" required maxlength="50" autofocus />
+<label asp-for="Password">Пароль</label><input asp-for="Password" class="form-control" autocomplete="current-password" required maxlength="128" />
+<div class="d-flex justify-content-between align-items-center my-4 gap-2"><label class="check-label m-0"><input asp-for="RememberMe" /> Запомнить меня</label><a href="/Account/ForgotPassword" class="small">Забыли пароль?</a></div>
+<button class="btn btn-primary rounded-pill w-100 py-3">Войти <i class="bi bi-arrow-right ms-2"></i></button></form>
+<p class="auth-bottom">Первый визит? <a href="/Account/Register">Создать аккаунт</a></p></section></div>

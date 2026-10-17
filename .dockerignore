@@ -1,0 +1,11 @@
+**/bin
+**/obj
+.git
+.artifacts
+release
+deploy/linux/private
+node_modules
+screenshots
+docs
+Bladez.Tests
+Bladez.Host

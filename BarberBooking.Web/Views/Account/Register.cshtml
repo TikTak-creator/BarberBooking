@@ -1,0 +1,10 @@
+@model RegisterModel
+@{ ViewData["Title"] = "Создать аккаунт"; }
+<section class="auth-card standalone"><span class="tiny-caps text-primary">РАДЫ ЗНАКОМСТВУ</span><h1>Ваш аккаунт</h1><p class="muted">Регистрация клиента. Доступ сотрудников выдаёт владелец салона.</p><div asp-validation-summary="All" class="validation-summary" role="alert"></div>
+<form asp-action="Register" method="post"><label asp-for="DisplayName">Как к вам обращаться</label><input asp-for="DisplayName" class="form-control" autocomplete="name" required maxlength="100" />
+<label asp-for="UserName">Логин</label><input asp-for="UserName" class="form-control" autocomplete="username" required maxlength="40" /><small class="muted">3–40 латинских букв, цифр или ._-</small>
+<label asp-for="Email">Email для восстановления (необязательно)</label><input asp-for="Email" class="form-control" type="email" autocomplete="email" maxlength="100" />
+<label asp-for="Password">Пароль</label><input asp-for="Password" class="form-control" autocomplete="new-password" required minlength="12" maxlength="128" /><small class="muted">Не менее 12 символов, с цифрами, строчными и заглавными буквами.</small>
+<label asp-for="ConfirmPassword">Повторите пароль</label><input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" required maxlength="128" />
+<label class="check-label my-4"><input asp-for="AcceptPrivacy" required /> Я ознакомился с <a href="/Home/Privacy">обработкой данных</a> и согласен с ней.</label>
+<button class="btn btn-primary rounded-pill w-100 py-3">Создать аккаунт <i class="bi bi-arrow-up-right ms-2"></i></button></form><p class="auth-bottom">Уже зарегистрированы? <a href="/Account/Login">Войти</a></p></section>

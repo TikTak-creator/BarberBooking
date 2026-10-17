@@ -1,0 +1,73 @@
+name: Verify Bladez
+on:
+  push:
+    branches: [main, 'redbox/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: {dotnet-version: '10.0.401'}
+      - name: Start isolated TLS MySQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          password=$(openssl rand -hex 24)
+          echo "::add-mask::$password"
+          echo "BLADEZ_QA_ROOT=$password" >> "$GITHUB_ENV"
+          docker run -d --name bladez-qa -e MYSQL_ROOT_PASSWORD="$password" -e MYSQL_ROOT_HOST=% -p 127.0.0.1:33306:3306 mysql:8.4.10 --require-secure-transport=ON --local-infile=OFF
+          for attempt in {1..90}; do
+            if docker exec bladez-qa mysqladmin ping --silent 2>/dev/null; then break; fi
+            sleep 2
+          done
+          docker cp bladez-qa:/var/lib/mysql/ca.pem "$RUNNER_TEMP/mysql-ca.pem"
+          echo "BLADEZ_TEST_ADMIN_CONNECTION=Server=127.0.0.1;Port=33306;User ID=root;Password=$password;SslMode=VerifyCA;SslCa=$RUNNER_TEMP/mysql-ca.pem;Pooling=false" >> "$GITHUB_ENV"
+      - run: dotnet restore Bladez.Tests --locked-mode
+      - run: dotnet run --project Bladez.Tests --no-restore
+      - name: Validate Linux deployment
+        working-directory: deploy/linux
+        run: |
+          bash -n install.sh manage.sh
+          BLADEZ_DOMAIN=ci.example.com BLADEZ_ACME_EMAIL=ci@example.com docker compose config --quiet
+          BLADEZ_DOMAIN=ci.example.com BLADEZ_ACME_EMAIL=ci@example.com docker compose build app
+          docker run --rm --entrypoint caddy -e BLADEZ_DOMAIN=ci.example.com -e BLADEZ_ACME_EMAIL=ci@example.com -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.11.7-alpine validate --config /etc/caddy/Caddyfile
+      - name: Exercise Linux installer and encrypted restore
+        working-directory: deploy/linux
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y python3-cryptography
+          password="QaA1_$(openssl rand -hex 20)"
+          echo "::add-mask::$password"
+          printf 'ci.example.com\nci@example.com\nBladez CI\nQA Owner\nqa_owner\n%s\n%s\n' "$password" "$password" | sudo bash install.sh
+          docker compose exec -T proxy wget -q -O- --header 'Host: ci.example.com' --header 'X-Forwarded-Proto: https' http://app:8080/health/ready | grep -q true
+          printf '%s\n%s\n' "$password" "$password" | sudo bash manage.sh backup
+          backup=$(sudo find backups -name '*.bladez-linux' -print -quit)
+          docker compose down
+          sudo mv private "$RUNNER_TEMP/bladez-original"
+          printf '%s\n' "$password" | sudo bash manage.sh restore "$backup"
+          sudo bash manage.sh start
+          sleep 5
+          docker compose exec -T proxy wget -q -O- --header 'Host: ci.example.com' --header 'X-Forwarded-Proto: https' http://app:8080/health/ready | grep -q true
+          docker compose down
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-security-report
+          path: .artifacts/tests-*/report.json
+      - name: Stop test server
+        if: always()
+        run: docker rm -f bladez-qa || true
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: {dotnet-version: '10.0.401'}
+      - run: dotnet build BarberBooking.slnx --locked-mode -c Release
+      - run: dotnet list BarberBooking.slnx package --vulnerable --include-transitive

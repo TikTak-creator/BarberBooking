@@ -1,0 +1,4 @@
+@model TwoFactorModel
+@{ ViewData["Title"] = "Подключить аутентификатор"; }
+<section class="auth-card standalone"><span class="tiny-caps text-primary">ВТОРОЙ ШАГ ЗАЩИТЫ</span><h1>Подключите приложение</h1><p class="muted">Отсканируйте QR-код в своём аутентификаторе или введите ключ вручную. Не показывайте его другим.</p><div class="totp-qr">@Html.Raw((string)ViewBag.Qr)</div><code class="totp-key">@ViewBag.Key</code>
+<form asp-action="EnableTwoFactor" method="post"><label asp-for="Code">Шестизначный код из приложения</label><input asp-for="Code" class="form-control" inputmode="numeric" autocomplete="one-time-code" required maxlength="8" /><button class="btn btn-primary rounded-pill mt-4 w-100">Подтвердить и включить</button></form></section>

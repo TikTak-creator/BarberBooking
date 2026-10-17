@@ -1,3 +1,6 @@
 <Solution>
   <Project Path="BarberBooking.Web/BarberBooking.Web.csproj" />
+  <Project Path="Bladez.Core/Bladez.Core.csproj" />
+  <Project Path="Bladez.Host/Bladez.Host.csproj" />
+  <Project Path="Bladez.Tests/Bladez.Tests.csproj" />
 </Solution>

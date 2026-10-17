@@ -41,6 +41,7 @@ public class TimeSlotDto
 
 public class CalendarAppointmentDto
 {
+    public Guid Version { get; set; }
     public int Id { get; set; }
     public string BookingCode { get; set; } = string.Empty;
     public int BarberId { get; set; }
@@ -99,6 +100,7 @@ public class ScheduleTimelineViewModel
 
 public class BookingConfirmationViewModel
 {
+    public Guid Version { get; set; }
     public string BookingCode { get; set; } = string.Empty;
     public string ClientName { get; set; } = string.Empty;
     public string ClientPhone { get; set; } = string.Empty;

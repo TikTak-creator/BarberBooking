@@ -1,0 +1,3 @@
+@model List<AuditEntry>
+@{ ViewData["Title"]="Журнал действий"; }
+<div class="section-heading"><div><span class="tiny-caps text-primary">ПОНЯТНАЯ ИСТОРИЯ</span><h1>Журнал действий</h1><p class="muted">Последние 200 событий. Контактные данные и пароли в журнал не записываются. Это рабочий аудит, не неизменяемое внешнее хранилище.</p></div></div><div class="table-card"><div class="table-responsive"><table class="table business-table"><thead><tr><th>UTC</th><th>Действие</th><th>Объект</th><th>ID аккаунта</th></tr></thead><tbody>@foreach(var a in Model) { <tr><td>@a.AtUtc.ToString("yyyy-MM-dd HH:mm:ss")</td><td><strong>@a.Action</strong></td><td>@a.Target</td><td><code>@(a.ActorId??"Гость / система")</code></td></tr> }</tbody></table></div></div>

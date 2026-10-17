@@ -50,6 +50,14 @@ public class Appointment
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    [StringLength(450)] public string? CustomerUserId { get; set; }
+    public ApplicationUser? CustomerUser { get; set; }
+    [StringLength(64)] public string? TicketHash { get; set; }
+    [StringLength(64)] public string PhoneFingerprint { get; set; } = "";
+    [StringLength(150)] public string ServiceNameSnapshot { get; set; } = "";
+    public int DurationSnapshot { get; set; }
+    [ConcurrencyCheck] public Guid Version { get; set; } = Guid.NewGuid();
+
     [StringLength(255)]
     public string? CancellationReason { get; set; }
 }

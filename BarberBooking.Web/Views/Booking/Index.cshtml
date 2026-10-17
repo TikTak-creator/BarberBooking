@@ -135,9 +135,9 @@
                         <div class="col-md-5">
                             <label class="form-label fw-bold text-dark">Дата записи</label>
                             <input type="date" class="form-control form-control-lg rounded-3" id="bookingDateInput" 
-                                   min="@DateTime.Today.ToString("yyyy-MM-dd")" 
-                                   value="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                            <div class="form-text">Выберите день визита. Запись доступна на 14 дней вперед.</div>
+                                   min="@(((DateTime)ViewBag.Today).ToString("yyyy-MM-dd"))" max="@(((DateTime)ViewBag.Today).AddDays(((ShopSettings)ViewBag.Shop).BookingHorizonDays).ToString("yyyy-MM-dd"))"
+                                   value="@(((DateTime)ViewBag.Today).ToString("yyyy-MM-dd"))" />
+                            <div class="form-text">Часовой пояс: @(((ShopSettings)ViewBag.Shop).TimeZoneId). Запись на @(((ShopSettings)ViewBag.Shop).BookingHorizonDays) дней вперёд.</div>
 
                             <!-- Быстрые кнопки дат -->
                             <div class="d-flex gap-2 mt-3">
@@ -268,7 +268,7 @@
 </div>
 
 @section Scripts {
-<script>
+<script nonce="@Context.Items["CspNonce"]">
     // Состояние формы бронирования
     const bookingState = {
         serviceId: null,
@@ -282,21 +282,6 @@
     };
 
     // Предвыбор при переходе с главной
-    @if (selectedServiceId.HasValue)
-    {
-        <text>
-        const initialService = document.querySelector(`.service-card-radio[data-id="@selectedServiceId"]`);
-        if (initialService) initialService.click();
-        </text>
-    }
-    @if (selectedBarberId.HasValue)
-    {
-        <text>
-        const initialBarber = document.querySelector(`.barber-card-radio[data-id="@selectedBarberId"]`);
-        if (initialBarber) initialBarber.click();
-        </text>
-    }
-
     // Выбор услуги
     document.querySelectorAll('.service-card-radio').forEach(card => {
         card.addEventListener('click', () => {
@@ -322,6 +307,12 @@
     });
 
     // Навигация по шагам
+    for (const card of document.querySelectorAll('.service-card-radio, .barber-card-radio')) {
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.click(); } });
+        if (card.classList.contains('selected')) card.click();
+    }
     function setStep(stepNum) {
         for (let i = 1; i <= 4; i++) {
             const stepEl = document.getElementById(`step${i}`);
@@ -357,7 +348,7 @@
         setStep(4);
         document.getElementById('finalService').textContent = bookingState.serviceName;
         document.getElementById('finalBarber').textContent = bookingState.barberName;
-        document.getElementById('finalDate').textContent = new Date(bookingState.date).toLocaleDateString('ru-RU');
+        document.getElementById('finalDate').textContent = new Date(bookingState.date + 'T12:00:00').toLocaleDateString('ru-RU');
         document.getElementById('finalTime').textContent = bookingState.timeSlot;
         document.getElementById('finalPrice').textContent = bookingState.servicePrice.toLocaleString('ru-RU') + ' сом';
     });
@@ -374,9 +365,9 @@
             btn.classList.remove('btn-outline-secondary');
 
             const offset = parseInt(btn.dataset.offset);
-            const d = new Date();
+            const d = new Date('@(((DateTime)ViewBag.Today).ToString("yyyy-MM-dd"))' + 'T12:00:00');
             d.setDate(d.getDate() + offset);
-            const dateStr = d.toISOString().split('T')[0];
+            const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
             document.getElementById('bookingDateInput').value = dateStr;
             bookingState.date = dateStr;
             loadSlots();
@@ -389,7 +380,9 @@
     });
 
     // AJAX загрузка свободных слотов
+    let slotSequence = 0;
     async function loadSlots() {
+        const sequence = ++slotSequence;
         const container = document.getElementById('slotsContainer');
         const loader = document.getElementById('slotsLoader');
         const noSlots = document.getElementById('noSlotsMessage');
@@ -405,6 +398,7 @@
             const url = `/api/booking/slots?barberId=${bookingState.barberId}&serviceId=${bookingState.serviceId}&date=${bookingState.date}`;
             const res = await fetch(url);
             const data = await res.json();
+            if (sequence !== slotSequence) return;
             loader.classList.add('d-none');
 
             if (!data.success || !data.slots || data.slots.length === 0) {
@@ -414,7 +408,9 @@
 
             let hasAnyAvailable = false;
             data.slots.forEach(slot => {
-                const btn = document.createElement('div');
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.disabled = !slot.isAvailable;
                 btn.className = `time-slot-btn ${slot.isAvailable ? '' : 'disabled'}`;
                 btn.textContent = slot.time;
                 btn.dataset.time = slot.time;
@@ -438,6 +434,7 @@
                 noSlots.classList.remove('d-none');
             }
         } catch (err) {
+            if (sequence !== slotSequence) return;
             loader.classList.add('d-none');
             noSlots.classList.remove('d-none');
             console.error(err);
@@ -486,7 +483,7 @@
         try {
             const res = await fetch('/api/booking/create', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.bladezCsrf() },
                 body: JSON.stringify(payload)
             });
 
