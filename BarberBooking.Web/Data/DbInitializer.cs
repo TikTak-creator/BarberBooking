@@ -12,8 +12,14 @@ public static class DbInitializer
         await db.Database.MigrateAsync();
         if (bootstrap is null) return;
         var users = provider.GetRequiredService<UserManager<ApplicationUser>>();
-        if (await users.GetUsersInRoleAsync(Roles.Owner) is { Count: > 0 })
-            throw new InvalidOperationException("An owner already exists. Initialization never resets existing accounts.");
+        if (await users.GetUsersInRoleAsync(Roles.Owner) is { Count: > 0 } owners)
+        {
+            var existing = owners.SingleOrDefault(u => string.Equals(u.UserName, bootstrap.UserName, StringComparison.OrdinalIgnoreCase));
+            if (existing is not null && await users.CheckPasswordAsync(existing, bootstrap.Password)
+                && await db.ShopSettings.AnyAsync(s => s.Id == 1 && s.DataKeyId == provider.GetRequiredService<Bladez.Core.DataVault>().Fingerprint("identity", "DataKey")))
+                return; // Resume after a crash between owner creation and host marker writing; never reset credentials.
+            throw new InvalidOperationException("An owner already exists. Supply the same owner credentials or use local recovery. Initialization never resets accounts.");
+        }
         if (!System.Text.RegularExpressions.Regex.IsMatch(bootstrap.UserName, "^[a-zA-Z0-9._-]{3,40}$")
             || string.IsNullOrWhiteSpace(bootstrap.DisplayName) || bootstrap.DisplayName.Length > 100
             || bootstrap.Password.Length is < 12 or > 128 || string.IsNullOrWhiteSpace(bootstrap.ShopName) || bootstrap.ShopName.Length > 100)

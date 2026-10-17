@@ -7,7 +7,7 @@ COPY Bladez.Core/ Bladez.Core/
 COPY BarberBooking.Web/ BarberBooking.Web/
 RUN dotnet publish BarberBooking.Web -c Release --no-restore -o /out /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.13
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.12
 WORKDIR /app
 COPY --from=build /out .
 USER 1654:1654

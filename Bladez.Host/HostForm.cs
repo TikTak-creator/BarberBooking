@@ -27,7 +27,7 @@ public sealed class HostForm : Form
         var selection = Path.Combine(HostSettings.DataDirectory, "active-profile.txt");
         if (File.Exists(selection)) profile = Path.GetFullPath(File.ReadAllText(selection).Trim());
         Text = "Bladez Host — сервер вашего барбершопа"; StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(1000, 810); MinimumSize = new Size(860, 740); BackColor = Color.White;
+        ClientSize = new Size(1000, Math.Min(900, Screen.PrimaryScreen!.WorkingArea.Height - 70)); MinimumSize = new Size(860, 640); BackColor = Color.White;
         Font = new Font("Segoe UI", 10); ForeColor = ink;
         var header = new Panel { Dock = DockStyle.Top, Height = 110, BackColor = ink, Padding = new Padding(36, 24, 36, 16) };
         header.Controls.Add(new Label { Text = "BLADEZ  /  HOST", Font = new Font("Segoe UI", 24, FontStyle.Bold), ForeColor = Color.White, AutoSize = true, Location = new Point(32, 20) });
@@ -46,6 +46,10 @@ public sealed class HostForm : Form
                 using var image = new Bitmap(Width, Height); DrawToBitmap(image, new Rectangle(Point.Empty, Size)); image.Save(Path.GetFullPath(args[1])); closing = true; Close(); return;
             }
             if (manager.Configured) await Run(async () => { await RuntimeCheck.EnsureAsync(this); await manager.StartAsync(); });
+            if (args.Length == 2 && args[0] == "--capture-dashboard")
+            {
+                UpdateStatus(); using var image = new Bitmap(Width, Height); DrawToBitmap(image, new Rectangle(Point.Empty, Size)); image.Save(Path.GetFullPath(args[1])); await manager.StopAsync(); closing = true; Close(); return;
+            }
             timer.Start();
         };
     }
@@ -89,7 +93,7 @@ public sealed class HostForm : Form
         body.Controls.Add(new Label { Text = "Локальный режим: сайт доступен на этом компьютере. Для публичного сайта с HTTPS\nиспользуйте комплект Linux/VPS или настройку обратного прокси из руководства.", ForeColor = muted, AutoSize = true, Location = new Point(36, 418) });
         Button("Настроить и запустить →", 36, 488, async (_, _) => await Run(Initialize), true, 290);
         Button("Восстановить копию…", 350, 488, async (_, _) => await Run(RestoreBackup), width: 260);
-        body.Controls.Add(new Label { Text = "Папка данных: " + profile, ForeColor = muted, AutoSize = true, Location = new Point(36, 553) });
+        body.Controls.Add(new Label { Text = "Папка данных: " + profile, ForeColor = muted, AutoSize = false, AutoEllipsis = true, Size = new Size(890, 48), Location = new Point(36, 553) });
     }
     private async Task Initialize()
     {
@@ -107,7 +111,7 @@ public sealed class HostForm : Form
         Title("Сервер под контролем", "Windows Host работает, пока открыто это окно или значок в трее. Для круглосуточной\nработы без входа в Windows используйте Linux/VPS из комплекта релиза.");
         status.Location = new Point(36, 140); status.Font = new Font(Font.FontFamily, 17, FontStyle.Bold); body.Controls.Add(status);
         body.Controls.Add(new Label { Text = manager.Settings.PublicUrl, Location = new Point(36, 196), Font = new Font(Font.FontFamily, 15), AutoSize = true, ForeColor = blue });
-        body.Controls.Add(new Label { Text = "Веб-сайт + отдельный MySQL 8.4\nAES-256-GCM для контактов • TLS к базе • индивидуальный пароль владельца\n\nДанные хранятся здесь:\n" + profile, AutoSize = true, ForeColor = muted, Location = new Point(36, 245) });
+        body.Controls.Add(new Label { Text = "Веб-сайт + отдельный MySQL 8.4\nAES-256-GCM для контактов • TLS к базе • индивидуальный пароль владельца\n\nДанные хранятся здесь:\n" + profile, AutoSize = false, AutoEllipsis = true, Size = new Size(890, 120), ForeColor = muted, Location = new Point(36, 245) });
         Button("Открыть сайт ↗", 36, 370, (_, _) => { if (manager.WebRunning) Process.Start(new ProcessStartInfo(manager.Settings.PublicUrl) { UseShellExecute = true }); else MessageBox.Show("Сначала запустите сервер."); }, true);
         Button("Запустить", 307, 370, async (_, _) => await Run(async () => await manager.StartAsync()));
         Button("Остановить", 578, 370, async (_, _) => await Run(async () => { await manager.StopAsync(); WriteLog("Сайт и отдельная база остановлены."); }));

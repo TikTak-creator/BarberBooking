@@ -55,8 +55,8 @@ openssl req -newkey rsa:3072 -sha256 -nodes -subj '/CN=db' -keyout private/db-ce
 printf 'subjectAltName=DNS:db,DNS:localhost,IP:127.0.0.1\nextendedKeyUsage=serverAuth\n' > private/server.ext
 openssl x509 -req -in private/server.csr -CA private/db-certs/ca.pem -CAkey private/ca-key.pem -CAcreateserial -days 825 -sha256 -extfile private/server.ext -out private/db-certs/server.pem 2>/dev/null
 cp private/db-certs/ca.pem private/ca.pem
-printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_app;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql_ca;AllowPublicKeyRetrieval=false;ConnectionTimeout=10' "$app_password" > private/app-connection
-printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_migrate;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql_ca;AllowPublicKeyRetrieval=false;ConnectionTimeout=10' "$migration_password" > private/migration-connection
+printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_app;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql-ca.pem;AllowPublicKeyRetrieval=false;ConnectionTimeout=10' "$app_password" > private/app-connection
+printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_migrate;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql-ca.pem;AllowPublicKeyRetrieval=false;ConnectionTimeout=10' "$migration_password" > private/migration-connection
 printf '%s\0%s\0%s\0%s' "$login" "$owner" "$password" "$shop" | python3 -c 'import sys,json; u,n,p,s=sys.stdin.buffer.read().decode().split("\0"); json.dump(dict(UserName=u,DisplayName=n,Password=p,ShopName=s,SeedCatalog=True),sys.stdout,ensure_ascii=False)' > private/bootstrap.json
 unset password repeat root_password app_password migration_password
 chmod 600 private/* 2>/dev/null || true

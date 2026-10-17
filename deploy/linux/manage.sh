@@ -8,6 +8,15 @@ case "${1:-status}" in
   status) docker compose ps; docker compose exec -T db mysql --defaults-extra-file=/run/secrets/root-client.cnf -Nse 'SELECT 1';;
   start) docker compose up -d --wait --wait-timeout 360 db; docker compose up -d app proxy;;
   stop) docker compose stop -t 60 proxy app db;;
+  recover-owner)
+    read -r -p 'Existing owner login: ' login
+    read -r -s -p 'New owner password (12–128 characters, Aa and digits): ' password; echo
+    read -r -s -p 'Repeat new password: ' repeat; echo
+    [[ $login =~ ^[a-zA-Z0-9._-]{3,40}$ && $password == "$repeat" && ${#password} -ge 12 && ${#password} -le 128 ]] || { echo 'Check owner login and matching passwords.'; exit 1; }
+    echo 'This offline operation resets the owner password, MFA, recovery codes and old sessions.'
+    printf '%s\0%s' "$login" "$password" | python3 -c 'import sys,json; u,p=sys.stdin.buffer.read().decode().split("\0"); json.dump(dict(UserName=u,Password=p),sys.stdout)' | docker compose run --rm -T app --recover-owner
+    unset password repeat
+    ;;
   logs) docker compose logs --tail 80 app proxy;;
   backup)
     command -v python3 >/dev/null && python3 -c 'import cryptography' || { echo 'Install python3-cryptography with apt, then rerun.'; exit 1; }
@@ -34,7 +43,7 @@ case "${1:-status}" in
     echo 'Create and test an encrypted backup before an update. Use the matching source package.'
     read -r -p 'Backup verified? Type UPDATE: ' answer; [[ $answer == UPDATE ]] || exit 1
     migration_password=$(openssl rand -hex 32)
-    printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_migrate;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql_ca;ConnectionTimeout=10' "$migration_password" > private/migration-connection
+    printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_migrate;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql-ca.pem;ConnectionTimeout=10' "$migration_password" > private/migration-connection
     chown 1654:1654 private/migration-connection; chmod 600 private/migration-connection
     cleanup() { docker compose exec -T db mysql --defaults-extra-file=/run/secrets/root-client.cnf -e "DROP USER IF EXISTS 'bladez_migrate'@'%';" || true; : > private/migration-connection; unset migration_password; }
     trap cleanup EXIT
@@ -45,5 +54,5 @@ case "${1:-status}" in
     cleanup; trap - EXIT
     docker compose up -d app proxy
     ;;
-  *) echo 'Commands: status | start | stop | logs | backup | restore FILE | update'; exit 1;;
+  *) echo 'Commands: status | start | stop | logs | backup | restore FILE | recover-owner | update'; exit 1;;
 esac

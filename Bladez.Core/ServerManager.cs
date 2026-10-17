@@ -30,6 +30,7 @@ public sealed class ServerManager(string directory, string serverDirectory, IPro
         Lock();
         if (Configured) throw new InvalidOperationException("Сервер уже настроен. Учётная запись владельца сохранена.");
         var vault = new DataVault(root);
+        if (File.Exists(Path.Combine(root, "secrets.vault"))) settings = HostSettings.Load(root);
         settings.Save(root);
         try
         {

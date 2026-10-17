@@ -12,7 +12,7 @@ x-web: &web
   security_opt: [no-new-privileges:true]
   volumes:
     - ./private/appdata:/var/lib/bladez
-    - ./private/ca.pem:/run/secrets/mysql_ca:ro
+    - ./private/ca.pem:/run/secrets/mysql-ca.pem:ro
   environment: &web-env
     BLADEZ_DATA: /var/lib/bladez
     BLADEZ_LISTEN_URL: http://0.0.0.0:8080
@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./private/appdata:/var/lib/bladez
-      - ./private/ca.pem:/run/secrets/mysql_ca:ro
+      - ./private/ca.pem:/run/secrets/mysql-ca.pem:ro
       - ./private/app-connection:/run/secrets/app_connection:ro
     depends_on:
       db: {condition: service_healthy}
@@ -67,7 +67,7 @@ services:
       BLADEZ_BOOTSTRAP_FILE: /run/secrets/bootstrap.json
     volumes:
       - ./private/appdata:/var/lib/bladez
-      - ./private/ca.pem:/run/secrets/mysql_ca:ro
+      - ./private/ca.pem:/run/secrets/mysql-ca.pem:ro
       - ./private/migration-connection:/run/secrets/migration_connection:ro
       - ./private/bootstrap.json:/run/secrets/bootstrap.json:ro
     depends_on:

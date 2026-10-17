@@ -50,7 +50,13 @@ async function main() {
     await page.setViewport({width:1440,height:1000,deviceScaleFactor:1});
     await submit('form[action="/Account/Logout"] button'); await go('/Account/Login');
     await fill('#UserName',config.owner); await fill('#Password',config.password); await submit('form[action="/Account/Login"] button');
-    await go('/admin/timeline?date='+day); await shot('16-timeline');
+    await go('/admin/timeline?date='+day);
+    const clipped = await page.evaluate(()=>Array.from(document.querySelectorAll('.appointment-block.compact')).some(card=> {
+      const bounds=card.getBoundingClientRect();
+      return ['.slot-time','strong'].some(selector=> {const text=card.querySelector(selector).getBoundingClientRect(); return text.height<10 || text.bottom>bounds.bottom-2 || text.top<bounds.top;});
+    }));
+    if(clipped)throw new Error('Short appointment text is vertically clipped');
+    await shot('16-timeline');
     await page.click('[data-appointment]'); await page.waitForSelector('#appointmentDetails.show'); await new Promise(resolve=>setTimeout(resolve,350)); await shot('17-appointment-details');
     await page.click('#appointmentDetails .btn-close'); await page.waitForFunction(()=>!document.querySelector('#appointmentDetails').classList.contains('show') && !document.querySelector('.modal-backdrop'));
     await page.click('[data-bs-target="#quickBooking"]'); await page.waitForSelector('#quickBooking.show'); await new Promise(resolve=>setTimeout(resolve,350)); await shot('18-quick-booking');

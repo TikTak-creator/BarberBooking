@@ -21,6 +21,8 @@ Keep copies on a separate protected device. Test restoration: in a fresh Host se
 
 If setup fails, preserve the data folder. Check free disk space, port conflicts, the VC++ prerequisite and `mysql-data/mysql.err`. Do not paste these files or secrets into a public issue. A failed download is never executed unless its checksum matches; remove only the failed download ZIP before retrying.
 
+If the owner loses both their password and MFA recovery codes, choose **Восстановить доступ владельца** in the local Host window. Supply the existing owner login and a new password. This requires access to the private host profile; it is never a public website bypass. It resets that owner's MFA/recovery codes and old sessions. Enable MFA again after signing in.
+
 ## Linux / VPS: first start
 
 Supported installer target: Linux x86_64, Ubuntu/Debian with systemd for automatic Docker installation. Other Docker hosts can use the Compose files after an administrator provisions the required settings. Plan at least 2 GB RAM plus disk capacity for images, MySQL and backups.
@@ -41,6 +43,7 @@ sudo bash manage.sh logs       # recent app/proxy logs; inspect locally
 sudo bash manage.sh stop       # graceful stop, keep data
 sudo bash manage.sh start      # start with existing data
 sudo bash manage.sh backup     # asks for a separate archive passphrase
+sudo bash manage.sh recover-owner # offline password/MFA recovery; requires root host access
 ```
 
 Docker's `unless-stopped` restart policy starts services after a host reboot when Docker is enabled. This does not replace monitoring or backups. For mail configure SMTP STARTTLS and a trusted provider in the owner Settings page. Initial certificate validation may take a few minutes; inspect Caddy logs when it fails.
