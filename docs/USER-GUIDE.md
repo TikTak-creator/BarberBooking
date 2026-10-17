@@ -2,7 +2,7 @@
 
 ## Windows: first start
 
-1. Download the official `Bladez-Setup-1.0.0.exe` or Windows portable ZIP from this repository's Releases. Compare the download SHA-256 with the release checksum file. The application itself is currently unsigned; a Windows reputation warning is possible. The included Microsoft prerequisite has Microsoft's signature.
+1. Download the official `Bladez-Setup-1.0.1.exe` or Windows portable ZIP from this repository's Releases. Compare the download SHA-256 with the release checksum file. The application itself is currently unsigned; a Windows reputation warning is possible. The included Microsoft prerequisite has Microsoft's signature.
 2. Run Setup and open **Bladez Host**. The app is installed for the current Windows user. Keep its server files together; do not move only the EXE.
 3. Enter the shop name, owner name, a Latin login and a unique password of 12–128 characters, with uppercase/lowercase Latin letters, digits and at least five different characters. There is no default owner account.
 4. Leave the website/MySQL ports as shown unless another service uses them. The wizard creates an independent MySQL, never reconfigures a system database. The first start downloads approximately 281 MB and checks a pinned SHA-256. If a Microsoft VC++ Runtime is missing, the host offers its included signed installer; Windows asks for elevation only for that component.

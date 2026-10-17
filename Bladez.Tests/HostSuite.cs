@@ -27,6 +27,18 @@ internal static class HostSuite
         var manager = new ServerManager(profile, server, new Progress<string>(Console.WriteLine));
         try
         {
+            using (var group = new OwnedProcessGroup())
+            {
+                ProcessStartInfo Child() { var info = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, CreateNoWindow = true }; info.ArgumentList.Add("--wait-child"); return info; }
+                using var tracked = Process.Start(Child())!; using var untracked = Process.Start(Child())!;
+                try
+                {
+                    group.Track(tracked); group.Dispose();
+                    using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)); await tracked.WaitForExitAsync(timeout.Token);
+                    Check(tracked.HasExited && !untracked.HasExited, "Only explicitly tracked server children terminate; unrelated children stay running");
+                }
+                finally { if (!tracked.HasExited) tracked.Kill(true); if (!untracked.HasExited) untracked.Kill(true); }
+            }
             if (previous is null) await manager.InitializeAsync(new { UserName = "qa_owner", DisplayName = "Владелец Bladez", Password = password, ShopName = "Bladez", SeedCatalog = true }, settings, archive);
             else await manager.StartAsync(archive);
             Check(manager.Configured && manager.WebRunning && manager.DatabaseRunning, "Real Windows host provisions MySQL, schema, owner and self-contained site");

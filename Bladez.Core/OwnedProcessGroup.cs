@@ -3,22 +3,35 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
-namespace Bladez.Host;
+namespace Bladez.Core;
 
-/// <summary>Windows closes this job on an unexpected host exit and terminates only its children.</summary>
-internal static class ProcessGuard
+/// <summary>Explicitly tracks only server children. Browser, Explorer and prerequisite installers are never assigned.</summary>
+public sealed class OwnedProcessGroup : IDisposable
 {
-    private static SafeFileHandle? job;
-    internal static void Attach()
+    private SafeFileHandle? job;
+    public void Track(Process process)
     {
-        job = CreateJobObject(IntPtr.Zero, null);
-        if (job.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error(), "Не удалось создать изоляцию процессов сервера.");
-        var limits = new ExtendedLimits { Basic = new BasicLimits { LimitFlags = 0x2000 } }; // KILL_ON_JOB_CLOSE
-        if (!SetInformationJobObject(job, 9, ref limits, (uint)Marshal.SizeOf<ExtendedLimits>())
-            || !AssignProcessToJobObject(job, Process.GetCurrentProcess().Handle))
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "Не удалось изолировать дочерние процессы сервера.");
-        // Keep the handle alive for the process lifetime. Never close it while the UI is running.
+        if (!OperatingSystem.IsWindows() || process.HasExited) return;
+        try
+        {
+            if (job is null)
+            {
+                job = CreateJobObject(IntPtr.Zero, null);
+                if (job.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
+                var limits = new ExtendedLimits { Basic = new BasicLimits { LimitFlags = 0x2000 } };
+                if (!SetInformationJobObject(job, 9, ref limits, (uint)Marshal.SizeOf<ExtendedLimits>()))
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+            if (!AssignProcessToJobObject(job, process.Handle))
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Не удалось изолировать дочерний процесс сервера.");
+        }
+        catch
+        {
+            if (!process.HasExited) process.Kill(true);
+            Dispose(); throw;
+        }
     }
+    public void Dispose() { job?.Dispose(); job = null; }
     [StructLayout(LayoutKind.Sequential)] private struct BasicLimits
     {
         public long PerProcessUserTimeLimit, PerJobUserTimeLimit;

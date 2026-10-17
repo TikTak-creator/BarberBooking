@@ -21,7 +21,7 @@ The supplied artwork above is a **documentation banner**. Product screenshots be
 
 Open [Releases](https://github.com/TikTak-creator/BarberBooking/releases) and choose the package for your computer/server.
 
-- **Windows 10/11 x64:** install `Bladez-Setup-1.0.0.exe`, open **Bladez Host**, enter the shop name and owner credentials, then choose **Set up and start**. MySQL is downloaded from Oracle and checked against a pinned SHA-256. .NET is included. If required, the included signed Microsoft VC++ Runtime asks for administrator permission.
+- **Windows 10/11 x64:** install `Bladez-Setup-1.0.1.exe`, open **Bladez Host**, enter the shop name and owner credentials, then choose **Set up and start**. MySQL is downloaded from Oracle and checked against a pinned SHA-256. .NET is included. If required, the included signed Microsoft VC++ Runtime asks for administrator permission.
 - **Linux x64 VPS (Ubuntu/Debian):** unpack the source/host package, open `deploy/linux`, run `sudo bash install.sh`, and answer the prompts. The installer can install Docker from its official signed apt repository, provisions MySQL and requests a public HTTPS certificate. You must supply your own domain, DNS and reachable ports 80/443.
 - **Source ZIP:** for developers who want to inspect, change or build the code.
 

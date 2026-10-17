@@ -9,7 +9,9 @@ namespace Bladez.Core;
 public sealed class ServerManager(string directory, string serverDirectory, IProgress<string>? progress = null)
 {
     private readonly string root = Path.GetFullPath(directory);
-    private readonly LocalMySql mysql = new(directory, progress);
+    private readonly OwnedProcessGroup processes = new();
+    private LocalMySql? database;
+    private LocalMySql mysql => database ??= new LocalMySql(directory, progress, processes.Track);
     private Process? web;
     private FileStream? profileLock;
     public bool WebRunning => web is { HasExited: false };
@@ -81,6 +83,7 @@ public sealed class ServerManager(string directory, string serverDirectory, IPro
             var info = WebInfo(); info.Environment["BLADEZ_CONNECTION_FILE"] = path;
             info.ArgumentList.Add(owner is null ? "--migrate" : "--initialize");
             using var process = Process.Start(info) ?? throw new InvalidOperationException("Не найден компонент сервера. Переустановите программу, сохранив папку данных.");
+            processes.Track(process);
             var output = process.StandardOutput.ReadToEndAsync(); var errors = process.StandardError.ReadToEndAsync();
             if (owner is not null) await process.StandardInput.WriteAsync(JsonSerializer.Serialize(owner));
             process.StandardInput.Close();
@@ -103,6 +106,7 @@ public sealed class ServerManager(string directory, string serverDirectory, IPro
         using (var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, uri.Port))
         { try { listener.Start(); } catch (System.Net.Sockets.SocketException) { throw new InvalidOperationException("Порт сайта занят. Закройте второе окно сервера или выберите свободный порт в server.json при остановленном сервере."); } }
         web = Process.Start(WebInfo()) ?? throw new InvalidOperationException("Не удалось запустить сайт.");
+        processes.Track(web);
         web.StandardInput.Close();
         web.OutputDataReceived += (_, _) => { }; web.ErrorDataReceived += (_, _) => { };
         web.BeginOutputReadLine(); web.BeginErrorReadLine();
@@ -124,6 +128,7 @@ public sealed class ServerManager(string directory, string serverDirectory, IPro
         await mysql.StartAsync(Settings, vault);
         var info = WebInfo(); info.ArgumentList.Add("--recover-owner");
         using var process = Process.Start(info) ?? throw new InvalidOperationException("Не удалось запустить восстановление.");
+        processes.Track(process);
         var output = process.StandardOutput.ReadToEndAsync(); var errors = process.StandardError.ReadToEndAsync();
         await process.StandardInput.WriteAsync(JsonSerializer.Serialize(new { UserName = userName, Password = password })); process.StandardInput.Close();
         await process.WaitForExitAsync(); var message = await output; await errors;
@@ -151,6 +156,6 @@ public sealed class ServerManager(string directory, string serverDirectory, IPro
             web?.Dispose(); web = null;
             if (mysql.IsRunning) await mysql.StopAsync(Settings, new DataVault(root));
         }
-        finally { profileLock?.Dispose(); profileLock = null; }
+        finally { processes.Dispose(); profileLock?.Dispose(); profileLock = null; }
     }
 }

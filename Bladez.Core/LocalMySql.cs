@@ -9,7 +9,7 @@ using MySql.Data.MySqlClient;
 namespace Bladez.Core;
 
 /// <summary>Manages only the private MySQL instance created in this host profile.</summary>
-public sealed class LocalMySql(string dataDirectory, IProgress<string>? progress = null)
+public sealed class LocalMySql(string dataDirectory, IProgress<string>? progress = null, Action<Process>? track = null)
 {
     public const string Version = "8.4.10";
     public const string ArchiveUrl = "https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.10-winx64.zip";
@@ -93,6 +93,7 @@ public sealed class LocalMySql(string dataDirectory, IProgress<string>? progress
         info.ArgumentList.Add("--defaults-file=" + Path.Combine(root, "mysql.ini"));
         if (File.Exists(init)) info.ArgumentList.Add("--init-file=" + init);
         process = Process.Start(info) ?? throw new InvalidOperationException("Не удалось запустить отдельный MySQL.");
+        track?.Invoke(process);
         process.OutputDataReceived += (_, _) => { }; process.ErrorDataReceived += (_, _) => { };
         process.BeginOutputReadLine(); process.BeginErrorReadLine();
         var secrets = vault.ReadSecrets();
@@ -163,9 +164,10 @@ public sealed class LocalMySql(string dataDirectory, IProgress<string>? progress
             throw new ArgumentException("Проверьте имя базы и порт. Разрешён отдельный пользователь bladez_app.");
     }
     private static ProcessStartInfo Info(string executable) => new(executable) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardOutput = true };
-    private static async Task RunAsync(ProcessStartInfo info, string error, CancellationToken cancellation)
+    private async Task RunAsync(ProcessStartInfo info, string error, CancellationToken cancellation)
     {
         using var process = Process.Start(info) ?? throw new InvalidOperationException(error);
+        track?.Invoke(process);
         var output = process.StandardOutput.ReadToEndAsync(cancellation); var stderr = process.StandardError.ReadToEndAsync(cancellation);
         await process.WaitForExitAsync(cancellation); await output; await stderr;
         if (process.ExitCode != 0) throw new InvalidOperationException(error);

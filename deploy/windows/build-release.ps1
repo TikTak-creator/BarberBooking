@@ -1,14 +1,14 @@
 param(
     [string]$InnoCompiler,
     [string]$MicrosoftRuntime,
-    [string]$Version = '1.0.0'
+    [string]$Version = '1.0.1'
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $repository = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 Set-Location -LiteralPath $repository
 if (-not (Test-Path -LiteralPath 'BarberBooking.slnx')) { throw 'Repository not found.' }
-if ($Version -ne '1.0.0') { throw 'Update application, installer and documentation versions before changing the release version.' }
+if ($Version -ne '1.0.1') { throw 'Update application, installer and documentation versions before changing the release version.' }
 if (-not $InnoCompiler -or -not (Test-Path -LiteralPath $InnoCompiler)) { throw 'Pass -InnoCompiler with the path to the official Inno Setup 6 compiler.' }
 if (-not $MicrosoftRuntime -or -not (Test-Path -LiteralPath $MicrosoftRuntime)) { throw 'Pass -MicrosoftRuntime with the official VC++ 14.44.35211 x64 redistributable.' }
 function Hash([string]$file) { $stream=[IO.File]::OpenRead($file); try { $sha=[Security.Cryptography.SHA256]::Create(); try { ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() } } finally { $stream.Dispose() } }
