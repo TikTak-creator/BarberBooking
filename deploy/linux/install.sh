@@ -81,8 +81,14 @@ docker compose exec -T db mysql --defaults-extra-file=/run/secrets/root-client.c
 rm -f -- private/init/10-bladez.sql private/migration-connection private/bootstrap.json
 # Empty placeholders let a later, explicit migration operation mount temporary credentials.
 touch private/migration-connection private/bootstrap.json; chown 1654:1654 private/migration-connection private/bootstrap.json; chmod 600 private/migration-connection private/bootstrap.json
-docker compose up -d app proxy
 touch private/installed
+docker compose up -d app proxy
+ready=false
+for attempt in {1..60}; do
+    if docker compose exec -T proxy wget -q -O- --header "Host: $domain" --header 'X-Forwarded-Proto: https' http://app:8080/health/ready 2>/dev/null | grep -q true; then ready=true; break; fi
+    sleep 2
+done
+[[ $ready == true ]] || { echo 'The site did not confirm database/key readiness. Data is preserved. Check: sudo bash manage.sh logs'; exit 1; }
 echo "Installed. Open https://$domain . Certificate issuance can take a few minutes."
 echo 'Server status: sudo bash manage.sh status'
 echo 'Back up now: sudo bash manage.sh backup'

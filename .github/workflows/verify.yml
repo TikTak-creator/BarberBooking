@@ -44,21 +44,26 @@ jobs:
           password="QaA1_$(openssl rand -hex 20)"
           echo "::add-mask::$password"
           printf 'ci.example.com\nci@example.com\nBladez CI\nQA Owner\nqa_owner\n%s\n%s\n' "$password" "$password" | sudo bash install.sh
-          docker compose exec -T proxy wget -q -O- --header 'Host: ci.example.com' --header 'X-Forwarded-Proto: https' http://app:8080/health/ready | grep -q true
+          sudo docker compose exec -T proxy wget -q -O- --header 'Host: ci.example.com' --header 'X-Forwarded-Proto: https' http://app:8080/health/ready | grep -q true
           printf '%s\n%s\n' "$password" "$password" | sudo bash manage.sh backup
           backup=$(sudo find backups -name '*.bladez-linux' -print -quit)
-          docker compose down
+          sudo docker compose down
           sudo mv private "$RUNNER_TEMP/bladez-original"
           printf '%s\n' "$password" | sudo bash manage.sh restore "$backup"
           sudo bash manage.sh start
-          sleep 5
-          docker compose exec -T proxy wget -q -O- --header 'Host: ci.example.com' --header 'X-Forwarded-Proto: https' http://app:8080/health/ready | grep -q true
-          docker compose down
+          ready=false
+          for attempt in {1..30}; do
+            if sudo docker compose exec -T proxy wget -q -O- --header 'Host: ci.example.com' --header 'X-Forwarded-Proto: https' http://app:8080/health/ready 2>/dev/null | grep -q true; then ready=true; break; fi
+            sleep 2
+          done
+          test "$ready" = true
+          sudo docker compose down
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: linux-security-report
           path: .artifacts/tests-*/report.json
+          include-hidden-files: true
       - name: Stop test server
         if: always()
         run: docker rm -f bladez-qa || true
