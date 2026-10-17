@@ -38,8 +38,17 @@ Compress-Archive -Path (Join-Path $windows '*') -DestinationPath $zip -Compressi
 $source = Join-Path $output "Bladez-Source-$Version.zip"
 git -c core.autocrlf=false archive --format=zip --prefix="Bladez-$Version/" --output=$source HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Source archive failed.' }
-# Source archive includes the novice Linux host installer; no SDK is required on the VPS (Docker builds it).
-$files = @("Bladez-Setup-$Version.exe", "Bladez-Windows-$Version.zip", "Bladez-Source-$Version.zip", 'release-manifest.json')
+$linux = Join-Path $output "Bladez-Linux-Host-$Version.zip"
+git -c core.autocrlf=false archive --format=zip --prefix="Bladez-Linux-Host/" --output=$linux HEAD BarberBooking.Web Bladez.Core deploy/linux .dockerignore docs/USER-GUIDE.md docs/SECURITY.md docs/THIRD-PARTY.md
+if ($LASTEXITCODE -ne 0) { throw 'Linux host archive failed.' }
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$archive = [IO.Compression.ZipFile]::Open($linux, [IO.Compression.ZipArchiveMode]::Update)
+try {
+    $entry = $archive.CreateEntry('Bladez-Linux-Host/START-HERE.txt')
+    $writer = [IO.StreamWriter]::new($entry.Open(),[Text.UTF8Encoding]::new($false))
+    try { $writer.Write("BLADEZ LINUX / VPS HOST $Version`n`n1. Use an x86_64 Ubuntu/Debian VPS and point your domain to it.`n2. Open deploy/linux in the terminal.`n3. Run: sudo bash install.sh`n4. Enter your domain, shop and owner credentials.`n5. Open your HTTPS domain; customize the catalog and enable owner MFA.`n`nInstallation can provision Docker, MySQL, database TLS and the HTTPS proxy.`nYou provide DNS and reachable ports 80/443. No pre-existing database is overwritten.`nRun: sudo bash manage.sh status / backup / stop / start`nRead docs/USER-GUIDE.md before production. Keep encrypted backups and their passwords separately.`n`nWindows users: download Bladez-Setup-$Version.exe instead.`n") } finally { $writer.Dispose() }
+} finally { $archive.Dispose() }
+$files = @("Bladez-Setup-$Version.exe", "Bladez-Windows-$Version.zip", "Bladez-Linux-Host-$Version.zip", "Bladez-Source-$Version.zip", 'release-manifest.json')
 $lines = foreach ($name in $files) { (Hash (Join-Path $output $name)) + '  ' + $name }
 [IO.File]::WriteAllLines((Join-Path $output 'SHA256SUMS.txt'),$lines,[Text.UTF8Encoding]::new($false))
 Write-Output "Built release from $commit. Output: $output"

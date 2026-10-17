@@ -43,7 +43,7 @@ case "${1:-status}" in
     echo 'Create and test an encrypted backup before an update. Use the matching source package.'
     read -r -p 'Backup verified? Type UPDATE: ' answer; [[ $answer == UPDATE ]] || exit 1
     migration_password=$(openssl rand -hex 32)
-    printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_migrate;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql-ca.pem;ConnectionTimeout=10' "$migration_password" > private/migration-connection
+    printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_migrate;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql-ca.pem;SslCert=/run/secrets/mysql-client.pem;SslKey=/run/secrets/mysql-client-key.pem;ConnectionTimeout=10' "$migration_password" > private/migration-connection
     chown 1654:1654 private/migration-connection; chmod 600 private/migration-connection
     cleanup() { docker compose exec -T db mysql --defaults-extra-file=/run/secrets/root-client.cnf -e "DROP USER IF EXISTS 'bladez_migrate'@'%';" || true; : > private/migration-connection; unset migration_password; }
     trap cleanup EXIT

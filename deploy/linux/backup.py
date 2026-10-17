@@ -74,7 +74,7 @@ def main():
             os.chmod(path, 0o700 if path.is_dir() else 0o600)
             if any(part in ('mysql', 'db-certs', 'init') for part in path.parts) or path.name in ('root-password', 'root-client.cnf'):
                 os.chown(path, 999, 999)
-            elif 'appdata' in path.parts or path.name in ('app-connection', 'migration-connection', 'bootstrap.json'):
+            elif 'appdata' in path.parts or path.name in ('app-connection', 'migration-connection', 'bootstrap.json', 'mysql-client.pem', 'mysql-client-key.pem'):
                 os.chown(path, 1654, 1654)
         os.chmod('private/ca.pem', 0o644)
         os.chmod('private', 0o700)

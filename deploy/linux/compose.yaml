@@ -13,6 +13,8 @@ x-web: &web
   volumes:
     - ./private/appdata:/var/lib/bladez
     - ./private/ca.pem:/run/secrets/mysql-ca.pem:ro
+    - ./private/mysql-client.pem:/run/secrets/mysql-client.pem:ro
+    - ./private/mysql-client-key.pem:/run/secrets/mysql-client-key.pem:ro
   environment: &web-env
     BLADEZ_DATA: /var/lib/bladez
     BLADEZ_LISTEN_URL: http://0.0.0.0:8080
@@ -51,6 +53,8 @@ services:
     volumes:
       - ./private/appdata:/var/lib/bladez
       - ./private/ca.pem:/run/secrets/mysql-ca.pem:ro
+      - ./private/mysql-client.pem:/run/secrets/mysql-client.pem:ro
+      - ./private/mysql-client-key.pem:/run/secrets/mysql-client-key.pem:ro
       - ./private/app-connection:/run/secrets/app_connection:ro
     depends_on:
       db: {condition: service_healthy}
@@ -68,6 +72,8 @@ services:
     volumes:
       - ./private/appdata:/var/lib/bladez
       - ./private/ca.pem:/run/secrets/mysql-ca.pem:ro
+      - ./private/mysql-client.pem:/run/secrets/mysql-client.pem:ro
+      - ./private/mysql-client-key.pem:/run/secrets/mysql-client-key.pem:ro
       - ./private/migration-connection:/run/secrets/migration_connection:ro
       - ./private/bootstrap.json:/run/secrets/bootstrap.json:ro
     depends_on:

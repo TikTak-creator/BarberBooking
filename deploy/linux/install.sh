@@ -55,8 +55,12 @@ openssl req -newkey rsa:3072 -sha256 -nodes -subj '/CN=db' -keyout private/db-ce
 printf 'subjectAltName=DNS:db,DNS:localhost,IP:127.0.0.1\nextendedKeyUsage=serverAuth\n' > private/server.ext
 openssl x509 -req -in private/server.csr -CA private/db-certs/ca.pem -CAkey private/ca-key.pem -CAcreateserial -days 825 -sha256 -extfile private/server.ext -out private/db-certs/server.pem 2>/dev/null
 cp private/db-certs/ca.pem private/ca.pem
-printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_app;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql-ca.pem;AllowPublicKeyRetrieval=false;ConnectionTimeout=10' "$app_password" > private/app-connection
-printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_migrate;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql-ca.pem;AllowPublicKeyRetrieval=false;ConnectionTimeout=10' "$migration_password" > private/migration-connection
+openssl genrsa -traditional -out private/mysql-client-key.pem 3072 2>/dev/null
+openssl req -new -key private/mysql-client-key.pem -subj '/CN=bladez-app' -out private/client.csr 2>/dev/null
+printf 'basicConstraints=CA:FALSE\nkeyUsage=digitalSignature,keyEncipherment\nextendedKeyUsage=clientAuth\n' > private/client.ext
+openssl x509 -req -in private/client.csr -CA private/db-certs/ca.pem -CAkey private/ca-key.pem -CAcreateserial -days 825 -sha256 -extfile private/client.ext -out private/mysql-client.pem 2>/dev/null
+printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_app;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql-ca.pem;SslCert=/run/secrets/mysql-client.pem;SslKey=/run/secrets/mysql-client-key.pem;AllowPublicKeyRetrieval=false;ConnectionTimeout=10' "$app_password" > private/app-connection
+printf 'Server=db;Port=3306;Database=bladez_business;User ID=bladez_migrate;Password=%s;SslMode=VerifyFull;SslCa=/run/secrets/mysql-ca.pem;SslCert=/run/secrets/mysql-client.pem;SslKey=/run/secrets/mysql-client-key.pem;AllowPublicKeyRetrieval=false;ConnectionTimeout=10' "$migration_password" > private/migration-connection
 printf '%s\0%s\0%s\0%s' "$login" "$owner" "$password" "$shop" | python3 -c 'import sys,json; u,n,p,s=sys.stdin.buffer.read().decode().split("\0"); json.dump(dict(UserName=u,DisplayName=n,Password=p,ShopName=s,SeedCatalog=True),sys.stdout,ensure_ascii=False)' > private/bootstrap.json
 unset password repeat root_password app_password migration_password
 chmod 600 private/* 2>/dev/null || true
@@ -65,6 +69,7 @@ chown -R 999:999 private/mysql private/db-certs private/init
 chown 999:999 private/root-password private/root-client.cnf
 chmod 600 private/db-certs/* private/init/*
 chown -R 1654:1654 private/appdata private/app-connection private/migration-connection private/bootstrap.json
+chown 1654:1654 private/mysql-client.pem private/mysql-client-key.pem
 chmod 644 private/ca.pem
 cleanup() { rm -f -- private/bootstrap.json; }
 trap cleanup EXIT

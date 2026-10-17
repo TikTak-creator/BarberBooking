@@ -29,7 +29,32 @@ Windows starts in **local office mode** at `127.0.0.1`: it runs while the Host w
 
 ## Product tour
 
-A larger gallery of actual desktop and mobile screens is being captured for this release. See [the screenshot index](docs/SCREENSHOTS.md).
+**30 actual screens**, captured from a running release build and its Windows host. Customer names and visits are isolated QA fixtures. [Open the full gallery →](docs/SCREENSHOTS.md)
+
+<p align="center"><img src="docs/screenshots/01-home.png" alt="Public home and service catalog" width="100%"></p>
+
+| Choose a real free slot | Your private ticket |
+|---|---|
+| ![Booking time](docs/screenshots/07-booking-time.png) | ![Booking ticket](docs/screenshots/09-ticket.png) |
+
+<p align="center"><b>The working day, in one place.</b></p>
+<p align="center"><img src="docs/screenshots/16-timeline.png" alt="Staff schedule with readable short visits" width="100%"></p>
+
+| Business overview | Staff accounts and access |
+|---|---|
+| ![Dashboard](docs/screenshots/19-dashboard.png) | ![Team](docs/screenshots/23-team.png) |
+| **Account security** | **Service management** |
+| ![Security](docs/screenshots/12-security.png) | ![Services](docs/screenshots/21-services.png) |
+
+<details><summary><b>Windows setup, host control and mobile views</b></summary>
+
+| First-run setup | Running host |
+|---|---|
+| ![Windows setup](docs/screenshots/29-windows-setup.png) | ![Windows host](docs/screenshots/30-windows-host.png) |
+
+<p align="center"><img src="docs/screenshots/13-mobile-home.png" width="28%" alt="Mobile home"> <img src="docs/screenshots/14-mobile-bookings.png" width="28%" alt="Mobile bookings"> <img src="docs/screenshots/28-mobile-timeline.png" width="28%" alt="Mobile staff schedule"></p>
+
+</details>
 
 ## Accounts and access
 

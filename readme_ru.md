@@ -29,7 +29,32 @@ Windows по умолчанию работает локально на `127.0.0.
 
 ## Посмотреть приложение
 
-Большая галерея настоящих экранов готовится вместе с релизом: [все скриншоты](docs/SCREENSHOTS.md).
+**30 настоящих экранов** приложения и Windows Host. Снимки сделаны на отдельной тестовой базе; имена и визиты — проверочные примеры. [Открыть всю галерею →](docs/SCREENSHOTS.md)
+
+<p align="center"><img src="docs/screenshots/01-home.png" alt="Главная страница и каталог" width="100%"></p>
+
+| Свободное время без звонков | Личный талон визита |
+|---|---|
+| ![Выбор времени](docs/screenshots/07-booking-time.png) | ![Талон записи](docs/screenshots/09-ticket.png) |
+
+<p align="center"><b>Рабочий день — перед глазами.</b></p>
+<p align="center"><img src="docs/screenshots/16-timeline.png" alt="Расписание с читаемыми карточками коротких визитов" width="100%"></p>
+
+| Обзор бизнеса | Аккаунты и доступ |
+|---|---|
+| ![Обзор дня](docs/screenshots/19-dashboard.png) | ![Команда](docs/screenshots/23-team.png) |
+| **Безопасность аккаунта** | **Управление прайсом** |
+| ![Безопасность](docs/screenshots/12-security.png) | ![Услуги](docs/screenshots/21-services.png) |
+
+<details><summary><b>Установка Windows, работающий сервер и мобильные экраны</b></summary>
+
+| Первая настройка | Управление сервером |
+|---|---|
+| ![Мастер настройки](docs/screenshots/29-windows-setup.png) | ![Окно сервера](docs/screenshots/30-windows-host.png) |
+
+<p align="center"><img src="docs/screenshots/13-mobile-home.png" width="28%" alt="Главная на телефоне"> <img src="docs/screenshots/14-mobile-bookings.png" width="28%" alt="Мои записи на телефоне"> <img src="docs/screenshots/28-mobile-timeline.png" width="28%" alt="Расписание на телефоне"></p>
+
+</details>
 
 ## Роли
 
