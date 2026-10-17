@@ -13,18 +13,22 @@ internal static class HostSuite
     private static int Port() { using var listener = new TcpListener(IPAddress.Loopback, 0); listener.Start(); return ((IPEndPoint)listener.LocalEndpoint).Port; }
     internal static async Task RunAsync(string repo, bool browser)
     {
-        var output = Path.Combine(repo, ".artifacts", "host-qa-" + Guid.NewGuid().ToString("N"));
-        var profile = Path.Combine(output, "original"); PrivateFiles.Directory(output);
+        var previous = Environment.GetEnvironmentVariable("BLADEZ_QA_PROFILE");
+        if (previous is not null && !Path.GetFullPath(previous).StartsWith(Path.Combine(repo, ".artifacts", "host-qa-"), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("QA resume is limited to this repository's disposable host profiles.");
+        var output = previous is null ? Path.Combine(repo, ".artifacts", "host-qa-" + Guid.NewGuid().ToString("N")) : Path.GetDirectoryName(Path.GetFullPath(previous))!;
+        var profile = previous ?? Path.Combine(output, "original"); PrivateFiles.Directory(output);
         var server = Path.Combine(repo, ".artifacts", "publish", "windows", "server");
         var archive = Path.Combine(repo, ".artifacts", "downloads", "mysql-8.4.10-winx64.zip");
-        var settings = new HostSettings { DatabasePort = Port(), ListenUrl = "http://127.0.0.1:" + Port(), DatabaseName = "bladez_qa" }; settings.PublicUrl = settings.ListenUrl;
+        var settings = previous is null ? new HostSettings { DatabasePort = Port(), ListenUrl = "http://127.0.0.1:" + Port(), DatabaseName = "bladez_qa" } : HostSettings.Load(profile); settings.PublicUrl = settings.ListenUrl;
         var password = "Qa_A1_" + Guid.NewGuid().ToString("N");
         var checks = new List<string>();
         void Check(bool condition, string label) { if (!condition) throw new InvalidOperationException("FAIL: " + label); checks.Add(label); Console.WriteLine("PASS: " + label); }
         var manager = new ServerManager(profile, server, new Progress<string>(Console.WriteLine));
         try
         {
-            await manager.InitializeAsync(new { UserName = "qa_owner", DisplayName = "Владелец Bladez", Password = password, ShopName = "Bladez", SeedCatalog = true }, settings, archive);
+            if (previous is null) await manager.InitializeAsync(new { UserName = "qa_owner", DisplayName = "Владелец Bladez", Password = password, ShopName = "Bladez", SeedCatalog = true }, settings, archive);
+            else await manager.StartAsync(archive);
             Check(manager.Configured && manager.WebRunning && manager.DatabaseRunning, "Real Windows host provisions MySQL, schema, owner and self-contained site");
             var competing = new ServerManager(profile, server);
             var denied = false; try { await competing.StartAsync(); } catch (InvalidOperationException) { denied = true; }
@@ -44,11 +48,11 @@ internal static class HostSuite
             }
             await manager.StopAsync();
             var vault = new DataVault(profile); var fingerprint = vault.Fingerprint("qa", "restore");
-            var backup = Path.Combine(output, "profile.bladez");
+            var backup = Path.Combine(output, "profile-" + Guid.NewGuid().ToString("N") + ".bladez");
             var backupPassword = DataVault.RandomSecret();
             await Task.Run(() => ProfileBackup.Create(profile, backup, backupPassword));
-            Check(File.Exists(backup) && !File.ReadAllBytes(backup).AsSpan().Contains("DPAPI1:"u8), "Cold profile backup encrypted under separate passphrase");
-            var restored = Path.Combine(output, "restored"); denied = false;
+            Check(File.Exists(backup) && File.ReadAllBytes(backup).AsSpan().IndexOf("DPAPI1:"u8) < 0, "Cold profile backup encrypted under separate passphrase");
+            var restored = Path.Combine(output, "restored-" + Guid.NewGuid().ToString("N")); denied = false;
             try { ProfileBackup.Restore(backup, restored, "WrongPassword_1234"); } catch (CryptographicException) { denied = true; }
             Check(denied && !Directory.Exists(restored), "Wrong backup password writes no profile");
             ProfileBackup.Restore(backup, restored, backupPassword);
@@ -65,7 +69,7 @@ internal static class HostSuite
                 Check(Convert.ToInt32(await command.ExecuteScalarAsync()) >= 1, "Owner account exists after restore");
             }
             finally { await restoredManager.StopAsync(); }
-            var broken = Path.Combine(output, "missing-key"); var brokenVault = new DataVault(broken); brokenVault.SaveSecrets(new HostSecrets()); File.Delete(Path.Combine(broken, "master.key"));
+            var broken = Path.Combine(output, "missing-key-" + Guid.NewGuid().ToString("N")); var brokenVault = new DataVault(broken); brokenVault.SaveSecrets(new HostSecrets()); File.Delete(Path.Combine(broken, "master.key"));
             denied = false; try { _ = new DataVault(broken); } catch (CryptographicException) { denied = true; }
             Check(denied && !File.Exists(Path.Combine(broken, "master.key")), "Lost key fails closed without silently creating a replacement");
         }
